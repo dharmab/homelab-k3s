@@ -26,6 +26,7 @@
       state: started
       enabled: true
     become: true
+
   handlers:
   - name: restart openssh server
     systemd:

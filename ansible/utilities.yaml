@@ -12,6 +12,7 @@
           - iotop
           - iw
           - jq
+          - kitty-terminfo
           - less
           - nmap
           - python-bcc
@@ -23,4 +24,5 @@
           - unzip
           - usbutils
           - which
+          - vim
       become: true

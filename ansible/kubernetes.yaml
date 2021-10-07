@@ -1,0 +1,59 @@
+---
+- hosts: all
+  tasks:
+  - name: uninstall iptables-nft
+    pacman:
+      name:
+        - iptables
+      state: absent
+      force: true
+    become: true
+
+  - name: install iptables-nft
+    pacman:
+      name:
+        - iptables-nft
+    become: true
+
+  - name: install kubernetes
+    pacman:
+      name:
+        - conntrack-tools
+        - docker
+        - kubeadm
+        - kubectl
+        - kubelet
+    become: true
+
+  - name: start docker
+    systemd:
+      name: docker
+      # Not started because a reboot may be required to load kernel modules
+      # on initial provision
+      enabled: true
+    become: true
+
+  - name: create kubernetes configuration directory
+    file:
+      path: /etc/kubernetes
+      state: directory
+      owner: root
+      group: root
+      mode: '0755'
+    become: true
+
+  - name: configure kubeadm
+    copy:
+      src: kubernetes/kubeadm/config.yaml
+      dest: /etc/kubernetes/kubeadm.yaml
+      owner: root
+      group: root
+      mode: '0644'
+    become: true
+
+  - name: enable kubelet
+    systemd:
+      service: kubelet
+      state: started
+      enabled: true
+    become: true
