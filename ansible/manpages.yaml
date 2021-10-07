@@ -1,0 +1,9 @@
+---
+- hosts: all
+  tasks:
+  - name: install manpages
+    pacman:
+      name:
+        - man-db
+        - man-pages
+    become: true

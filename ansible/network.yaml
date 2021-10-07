@@ -1,0 +1,13 @@
+---
+- hosts: all
+  tasks:
+  - name: install networking tools
+    pacman:
+      name:
+      - dhcpcd
+      - ifplugd
+      - netctl
+      - openvpn
+      - wireguard-tools
+      - wpa_supplicant
+    become: true

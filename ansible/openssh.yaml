@@ -1,0 +1,34 @@
+---
+- hosts: all
+  tasks:
+  - name: configure openssh server
+    copy:
+      src: openssh/sshd_config
+      dest: /etc/ssh/sshd_config
+      owner: root
+      group: root
+      mode: 0644
+      validate: sshd -t -f %s
+    become: true
+    notify:
+      - restart openssh server
+
+  - name: disable weak openssh moduli
+    script:
+      cmd: openssh/disable_weak_moduli.sh
+    become: true
+    notify:
+      - restart openssh server
+
+  - name: enable openssh server
+    systemd:
+      name: sshd
+      state: started
+      enabled: true
+    become: true
+  handlers:
+  - name: restart openssh server
+    systemd:
+      name: sshd
+      state: restarted
+    become: true

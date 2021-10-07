@@ -1,0 +1,10 @@
+---
+- import_playbook: pacman.yaml
+- import_playbook: cpu.yaml
+- import_playbook: firmware.yaml
+- import_playbook: filesystem.yaml
+- import_playbook: network.yaml
+- import_playbook: openssh.yaml
+- import_playbook: time.yaml
+- import_playbook: manpages.yaml
+- import_playbook: utilities.yaml

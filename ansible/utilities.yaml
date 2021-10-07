@@ -1,0 +1,26 @@
+---
+- hosts: all
+  tasks:
+    - name: install admin utilities
+      pacman:
+        name:
+          - bcc-tools
+          - bind-tools
+          - curl
+          - htop
+          - httpie
+          - iotop
+          - iw
+          - jq
+          - less
+          - nmap
+          - python-bcc
+          - ripgrep
+          - rsync
+          - strace
+          - sysstat
+          - udisks2
+          - unzip
+          - usbutils
+          - which
+      become: true

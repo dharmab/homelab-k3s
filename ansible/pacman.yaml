@@ -1,0 +1,40 @@
+---
+- hosts: all
+  tasks:
+  - name: enable parallel downloads
+    ini_file:
+      path: /etc/pacman.conf
+      section: options
+      option: ParallelDownloads
+      value: "5"
+    become: yes
+
+  - name: update pacman cache
+    pacman:
+      update_cache: true
+    become: true
+
+  - name: install pacman tools
+    pacman:
+      name: pacman-contrib
+    become: true
+
+  - name: install reflector
+    pacman:
+      name: reflector
+    become: true
+
+  - name: update pacman mirrorlist
+    script: pacman/update-mirrorlist.sh
+    become: true
+
+  - name: install base metapackage
+    pacman:
+      name: base
+    become: true
+
+  - name: perform full upgrade
+    pacman:
+      upgrade: true
+      update_cache: true
+    become: true
