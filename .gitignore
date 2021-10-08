@@ -1,1 +1,3 @@
 .vagrant/
+vagrant/ssh_config
+kubernetes/kubeconfig.yaml

@@ -23,23 +23,26 @@
         - kubeadm
         - kubectl
         - kubelet
+        - helm
     become: true
 
   - name: start docker
     systemd:
       name: docker
-      # Not started because a reboot may be required to load kernel modules
-      # on initial provision
+      state: started
       enabled: true
     become: true
 
-  - name: create kubernetes configuration directory
+  - name: create kubernetes directories
     file:
-      path: /etc/kubernetes
+      path: "{{ item }}"
       state: directory
       owner: root
       group: root
       mode: '0755'
+    with_items:
+      - "/etc/kubernetes"
+      - "/opt/kubernetes/bin"
     become: true
 
   - name: configure kubeadm
@@ -57,3 +60,9 @@
       state: started
       enabled: true
     become: true
+
+  - name: initalize kubernetes
+    script:
+      cmd: kubernetes/kubeadm/init.sh
+      creates: /etc/kubernetes/admin.conf
+

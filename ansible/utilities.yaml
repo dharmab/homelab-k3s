@@ -25,4 +25,14 @@
           - usbutils
           - which
           - vim
+          - cryptsetup
+          - e2fsprogs
+          - dhcpcd
+          - ifplugd
+          - netctl
+          - openvpn
+          - wireguard-tools
+          - wpa_supplicant
+          - man-db
+          - man-pages
       become: true

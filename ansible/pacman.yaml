@@ -37,4 +37,33 @@
     pacman:
       upgrade: true
       update_cache: true
+    notify:
+      - reboot system
     become: true
+
+  - name: install Intel microcode
+    pacman:
+      name: intel-ucode
+    when: "'GenuineIntel' in ansible_processor"
+    become: true
+    notify:
+      - reboot system
+
+  - name: install AMD microcode
+    pacman:
+      name: amd-ucode
+    when: "'AuthenticAMD' in ansible_processor"
+    become: true
+    notify:
+      - reboot system
+
+  - name: install firmware
+    pacman:
+      name: linux-firmware
+    become: true
+    notify:
+      - reboot system
+
+  handlers:
+  - name: reboot system
+    reboot:
