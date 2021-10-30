@@ -1,0 +1,49 @@
+---
+- hosts: all
+  tasks:
+  - name: create k3s directory
+    file:
+      path: /opt/k3s/bin
+      state: directory
+      owner: root
+      group: root
+    become: true
+
+  - name: download k3s binary
+    get_url:
+      url: https://github.com/k3s-io/k3s/releases/download/v1.22.2%2Bk3s2/k3s
+      dest: /opt/k3s/bin/k3s
+      checksum: sha256:567e5838dc9d0346ea1aae55b917ee557d3a7b89947de5038eb41a500d87f0d7
+      mode: 0755
+      owner: root
+      group: root
+    become: true
+    notify:
+      - restart k3s server
+
+  - name: create k3s server systemd service
+    copy:
+      src: k3s/k3s.service
+      dest: /etc/systemd/system/k3s.service
+      owner: root
+      group: root
+      mode: 0644
+    become: true
+
+  - name: enable k3s server
+    systemd:
+      name: k3s
+      state: started
+      enabled: true
+      daemon_reload: true
+    become: true
+    notify:
+      - restart k3s server
+
+  handlers:
+  - name: restart k3s server
+    systemd:
+      name: k3s
+      state: restarted
+      daemon_reload: true
+    become: true

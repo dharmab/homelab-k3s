@@ -1,7 +1,6 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "archlinux/archlinux"
   config.vm.network "forwarded_port", protocol: "tcp", guest: 6443, host: 6443
-  config.vm.network "forwarded_port", protocol: "tcp", guest: 2379, host: 2379
   config.vm.provider "libvirt" do |v|
     v.cpus = 2
     v.memory = 4096

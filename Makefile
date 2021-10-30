@@ -1,6 +1,8 @@
-.PHONY: lab-up vm-up vm-provision vm-down vm-restart vm-destroy vm-shell
+.PHONY: lab-up vm-up vm-provision vm-down vm-restart vm-destroy vm-shell clean
 
-lab-up: clean vm-up vm-provision vm-restart
+KUBECONFIG=kubernetes/kubeconfig.yaml
+
+lab-up: clean vm-up vm-provision vm-restart $(KUBECONFIG)
 
 VAGRANT_UP=vagrant up --provider=libvirt --no-provision
 
@@ -22,3 +24,10 @@ vm-destroy:
 
 vm-shell:
 	@vagrant ssh
+
+$(KUBECONFIG):
+	vagrant ssh -c "sudo cat /etc/rancher/k3s/k3s.yaml" > $(KUBECONFIG)
+	./hack/kubeconfig.py --kubeconfig $(KUBECONFIG)
+
+clean:
+	rm -f $(KUBECONFIG)
