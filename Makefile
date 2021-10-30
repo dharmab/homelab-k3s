@@ -2,7 +2,10 @@
 
 KUBECONFIG=kubernetes/kubeconfig.yaml
 
-lab-up: clean vm-up vm-provision vm-restart $(KUBECONFIG)
+lab-up: clean install-dependencies vm-up vm-provision vm-restart $(KUBECONFIG)
+
+install-dependencies:
+	poetry install --no-root
 
 VAGRANT_UP=vagrant up --provider=libvirt --no-provision
 

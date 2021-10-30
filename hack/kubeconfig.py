@@ -2,9 +2,9 @@
 """Hack script to make kubeconfig work with Vagrant VM"""
 
 import argparse
+import pathlib
 
 import yaml
-import pathlib
 
 
 def main() -> None:
@@ -29,7 +29,7 @@ def main() -> None:
     for cluster in kubeconfig["clusters"]:
         cluster["cluster"]["server"] = "https://127.0.0.1:6443"
 
-    with open(kubeconfig_path, encoding="utf-8", mode='w') as path:
+    with open(kubeconfig_path, encoding="utf-8", mode="w") as path:
         yaml.dump(kubeconfig, path)
 
 

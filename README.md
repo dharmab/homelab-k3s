@@ -2,15 +2,11 @@
 
 Lab environment for single-node Kubernetes research.
 
-The operating system is Arch Linux. Docker, kubelet, kubeadm and kubectl are
-installed from the Arch Linux repositories.
+The operating system is [Arch Linux](https://archlinux.org/) and the Kubernetes
+distribution is [k3s](https://k3s.io) (binary installed from GitHub releases).
 
-To set up the environment, set up a Python 3 virtualenv and install the
-dependencies in `requirements.txt`:
-
-```bash
-pip install -r requirements.txt
-```
+To set up the environment, install make, Python 3 and
+[Poetry](https://python-poetry.org/).
 
 To create and launch the lab VM for the first time, run `make lab-up`. This
 will create a VM, apply an Ansible playbook to install packages and initialize
@@ -18,7 +14,7 @@ Kubernetes, restart the VM to apply upgrades and download a kubeconfig file
 to `kubernetes/kubeconfig.yaml`. You can use this kubeconfig file to access
 the Kubernetes API:
 
-```bash
+```sh
 export KUBECONFIG=kubernetes/kubeconfig.yaml
 kubectl get node
 ```
