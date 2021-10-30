@@ -3,4 +3,4 @@
 - import_playbook: openssh.yaml
 - import_playbook: time.yaml
 - import_playbook: utilities.yaml
-- import_playbook: kubernetes.yaml
+- import_playbook: nomad.yaml

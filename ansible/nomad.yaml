@@ -1,0 +1,62 @@
+---
+- hosts: all
+  tasks:
+  - name: install nomad
+    pacman:
+      name:
+        - nomad
+    become: true
+
+  - name: create nomad group
+    group:
+      name: nomad
+    become: true
+
+  - name: create nomad user
+    user:
+      name: nomad
+      shell: /usr/bin/nologin
+      group: nomad
+    become: true
+
+  - name: create nomad directories
+    file:
+      name: /opt/nomad
+      state: directory
+      owner: nomad
+      group: nomad
+    become: true
+
+  - name: configure nomad
+    template:
+      src: nomad/nomad.hcl
+      dest: /etc/nomad.d/nomad.hcl
+      mode: 0700
+      owner: nomad
+      group: nomad
+    become: true
+    notify:
+      - restart nomad
+
+  - name: create nomad systemd unit
+    copy:
+      src: nomad/nomad.service
+      dest: /etc/systemd/system/nomad.service
+      owner: root
+      group: root
+    become: true
+    notify:
+      - restart nomad
+
+  - name: enable nomad
+    systemd:
+      name: nomad
+      state: started
+      enabled: true
+    become: true
+  handlers:
+  - name: restart nomad
+    systemd:
+      name: nomad
+      state: restarted
+    become: true
