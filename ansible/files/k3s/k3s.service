@@ -12,7 +12,7 @@ EnvironmentFile=-/etc/default/%N
 EnvironmentFile=-/etc/sysconfig/%N
 EnvironmentFile=-/etc/systemd/system/k3s.service.env
 ExecStartPre=/bin/sh -xc '! /usr/bin/systemctl is-enabled --quiet nm-cloud-setup.service'
-ExecStart=/opt/k3s/bin/k3s server
+ExecStart=/opt/k3s/bin/k3s server --disable traefik
 KillMode=process
 Delegate=yes
 # Having non-zero Limits causes performance problems due to accounting overhead

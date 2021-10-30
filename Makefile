@@ -28,9 +28,9 @@ vm-destroy:
 vm-shell:
 	@vagrant ssh
 
-$(KUBECONFIG):
+$(KUBECONFIG): install-dependencies
 	vagrant ssh -c "sudo cat /etc/rancher/k3s/k3s.yaml" > $(KUBECONFIG)
-	./hack/kubeconfig.py --kubeconfig $(KUBECONFIG)
+	poetry run ./hack/kubeconfig.py --kubeconfig $(KUBECONFIG)
 
 clean:
 	rm -f $(KUBECONFIG)
