@@ -258,11 +258,13 @@ spec:
       protocol: TCP
       targetPort: http
       appProtocol: http
+      nodePort: 31080
     - name: https
       port: 443
       protocol: TCP
       targetPort: https
       appProtocol: https
+      nodePort: 31443
   selector:
     app.kubernetes.io/name: ingress-nginx
     app.kubernetes.io/instance: ingress-nginx
@@ -311,6 +313,7 @@ spec:
             - --validating-webhook=:8443
             - --validating-webhook-certificate=/usr/local/certificates/cert
             - --validating-webhook-key=/usr/local/certificates/key
+            - --enable-prometheus-metrics
           securityContext:
             capabilities:
               drop:
@@ -359,6 +362,9 @@ spec:
               protocol: TCP
             - name: webhook
               containerPort: 8443
+              protocol: TCP
+            - name: metrics
+              containerPort: 9113
               protocol: TCP
           volumeMounts:
             - name: webhook-cert
