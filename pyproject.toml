@@ -8,6 +8,7 @@ authors = ["Dharma Bellamkonda <dharma.bellamkonda@gmail.com>"]
 python = "^3.9"
 PyYAML = "^6.0"
 kubernetes = "^19.15.0"
+Jinja2 = "^3.0.2"
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"
@@ -15,6 +16,12 @@ isort = "^5.9.3"
 mypy = "^0.910"
 pylint = "^2.11.1"
 types-PyYAML = "^6.0.0"
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = "missing-module-docstring,missing-class-docstring,missing-function-docstring,invalid-name,wrong-import-order"
+
+[tool.mypy]
+disallow_untyped_defs = "True"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

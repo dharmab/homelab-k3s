@@ -1,4 +1,4 @@
-.PHONY: lab-up vm-up vm-provision vm-down vm-restart vm-destroy vm-shell clean cluster-deploy
+.PHONY: lab-up vm-up vm-provision vm-down vm-restart vm-destroy vm-shell clean cluster-deploy format check
 
 KUBECONFIG=kubernetes/kubeconfig.yaml
 
@@ -37,3 +37,13 @@ cluster-deploy:
 
 clean:
 	rm -f $(KUBECONFIG)
+
+format:
+	black **/*.py
+	isort **/*.py
+
+check:
+	black --check **/*.py
+	isort --check **/*.py
+	mypy **/*.py
+	pylint **/*.py

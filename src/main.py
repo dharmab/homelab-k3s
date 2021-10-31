@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 import argparse
-from typing import List, Tuple
-from pathlib import Path
-import yaml
 import enum
 import subprocess
-import kubernetes.client
-import kubernetes.config
+from pathlib import Path
 from time import sleep
+from typing import List
+
+import kubernetes.client  # type: ignore
+import kubernetes.config  # type: ignore
+import yaml
 
 
 class Command(enum.Enum):
@@ -59,9 +60,7 @@ def kubectl_apply(manifests: List[dict]) -> None:
     if not manifests:
         return
     for manifest in manifests:
-        message = "Applying {} {}".format(
-            manifest["kind"], manifest["metadata"]["name"]
-        )
+        message = f'Applying {manifest["kind"]} {manifest["metadata"]["name"]}'
         namespace = manifest["metadata"].get("namespace")
         if namespace:
             message += f" in Namespace {namespace}"
@@ -79,7 +78,7 @@ def kubectl_apply(manifests: List[dict]) -> None:
     except subprocess.CalledProcessError as e:
         print("\n".join(("kubectl apply failed:", str(e.stdout), str(e.stderr))))
         raise
-    print("Applied {} manifest(s) successfully".format(len(manifests)))
+    print(f"Applied {len(manifests)} manifest(s) successfully")
 
 
 def _wait_for_crd(
@@ -104,7 +103,7 @@ def _wait_for_crd(
 def deploy_manifests(
     manifests: List[dict], *, api_extensions_api: kubernetes.client.ApiextensionsV1Api
 ) -> None:
-    def filter_manifests(*args) -> List[dict]:
+    def filter_manifests(*args: str) -> List[dict]:
         return [m for m in manifests if m["kind"] in args]
 
     kubectl_apply(filter_manifests("Namespace"))
@@ -114,7 +113,7 @@ def deploy_manifests(
         _wait_for_crd(
             crd_manifest["metadata"]["name"], api_extensions_api=api_extensions_api
         )
-    print("Confirmed {} CustomResourceDefinitions".format(len(crd_manifests)))
+    print("Verified {len(crd_manifests)} CustomResourceDefinitions")
     kubectl_apply(filter_manifests("ClusterRole", "Role", "ServiceAccount"))
     kubectl_apply(filter_manifests("ClusterRoleBinding" "RoleBinding"))
     kubectl_apply(filter_manifests("ConfigMap" "Secret"))
