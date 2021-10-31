@@ -76,7 +76,7 @@ def kubectl_apply(manifests: List[dict]) -> None:
             check=True,
         )
     except subprocess.CalledProcessError as e:
-        print("\n".join(("kubectl apply failed:", str(e.stdout), str(e.stderr))))
+        print("\n".join(("kubectl apply failed:", e.stdout.decode("utf-8"), e.stderr.decode("utf-8"))))
         raise
     print(f"Applied {len(manifests)} manifest(s) successfully")
 
@@ -100,6 +100,17 @@ def _wait_for_crd(
         sleep(1)
 
 
+def customize_manifests(manifests: List[dict]) -> List[dict]:
+    for manifest in manifests:
+        if manifest["kind"] in ("Deployment", "StatefulSet", "Job", "CronJob"):
+            pod_template = manifest["spec"]["template"]
+
+            for container in pod_template["spec"]["containers"]:
+                container["imagePullPolicy"] = "IfNotPresent"
+
+    return manifests
+
+
 def deploy_manifests(
     manifests: List[dict], *, api_extensions_api: kubernetes.client.ApiextensionsV1Api
 ) -> None:
@@ -107,6 +118,7 @@ def deploy_manifests(
         return [m for m in manifests if m["kind"] in args]
 
     kubectl_apply(filter_manifests("Namespace"))
+
     crd_manifests = filter_manifests("CustomResourceDefinition")
     kubectl_apply(crd_manifests)
     for crd_manifest in crd_manifests:
@@ -114,9 +126,10 @@ def deploy_manifests(
             crd_manifest["metadata"]["name"], api_extensions_api=api_extensions_api
         )
     print("Verified {len(crd_manifests)} CustomResourceDefinitions")
+
     kubectl_apply(filter_manifests("ClusterRole", "Role", "ServiceAccount"))
-    kubectl_apply(filter_manifests("ClusterRoleBinding" "RoleBinding"))
-    kubectl_apply(filter_manifests("ConfigMap" "Secret"))
+    kubectl_apply(filter_manifests("ClusterRoleBinding", "RoleBinding"))
+    kubectl_apply(filter_manifests("ConfigMap", "Secret"))
     kubectl_apply(manifests)
 
 
@@ -124,13 +137,12 @@ def main() -> None:
     """Entrypoint function"""
     args = _parse_args()
     if args.command == "deploy":
-        manifest_paths = [Path(m) for m in args.manifests]
-        manifests = parse_manifests(manifest_paths)
-
         kubernetes.config.load_kube_config()
-        api_extensions_api = kubernetes.client.ApiextensionsV1Api()
 
-        deploy_manifests(manifests, api_extensions_api=api_extensions_api)
+        deploy_manifests(
+            customize_manifests(parse_manifests([Path(m) for m in args.manifests])),
+            api_extensions_api=kubernetes.client.ApiextensionsV1Api(),
+        )
 
 
 if __name__ == "__main__":
