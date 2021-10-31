@@ -12,8 +12,10 @@ spec:
   endpoints:
   - interval: 30s
     port: web
+    path: /alertmanager/metrics/
   - interval: 30s
     port: reloader-web
+    path: /alertmanager/metrics/
   selector:
     matchLabels:
       alertmanager: main

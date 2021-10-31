@@ -12,4 +12,16 @@ stringData:
   grafana.ini: |
     [date_formats]
     default_timezone = UTC
+
+    [server]
+    root_url = http://localhost:3000/grafana
+    serve_from_sub_path = true
+
+    [auth]
+    disable_login_form = true
+
+    [auth.anonymous]
+    enabled = True
+    organization = Main Org.
+    org_role = Editor
 type: Opaque

@@ -10,6 +10,8 @@ metadata:
   name: main
   namespace: monitoring
 spec:
+  externalUrl: https://localhost:8080/alertmanager
+  routePrefix: /alertmanager
   image: quay.io/prometheus/alertmanager:v0.23.0
   nodeSelector:
     kubernetes.io/os: linux

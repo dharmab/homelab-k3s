@@ -12,8 +12,10 @@ spec:
   endpoints:
   - interval: 30s
     port: web
+    path: /prometheus/metrics
   - interval: 30s
     port: reloader-web
+    path: /prometheus/metrics
   selector:
     matchLabels:
       app.kubernetes.io/component: prometheus
