@@ -1,6 +1,13 @@
 ---
 - hosts: all
   tasks:
+
+  - name: install open-iscsi
+    pacman:
+      name:
+      - open-iscsi
+    become: true
+
   - name: create k3s directory
     file:
       path: /opt/k3s/bin
@@ -29,6 +36,8 @@
       group: root
       mode: 0644
     become: true
+    notify:
+      - restart k3s server
 
   - name: enable k3s server
     systemd:
@@ -37,8 +46,6 @@
       enabled: true
       daemon_reload: true
     become: true
-    notify:
-      - restart k3s server
 
   handlers:
   - name: restart k3s server

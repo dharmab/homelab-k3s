@@ -1,0 +1,79 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: teamspeak
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: teamspeak
+  namespace: teamspeak
+  labels:
+    app.kubernetes.io/name: teamspeak
+spec:
+  type: NodePort
+  ports:
+  - name: voice
+    port: 9987
+    protocol: UDP
+    targetPort: voice
+    nodePort: 31987
+  - name: filetransfer
+    port: 10011
+    targetPort: filetransfer
+    nodePort: 31988
+  selector:
+    app.kubernetes.io/name: teamspeak
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: teamspeak
+  namespace: teamspeak
+  labels:
+    app.kubernetes.io/name: teamspeak
+spec:
+  serviceName: teamspeak
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: teamspeak
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: teamspeak
+    spec:
+      containers:
+      - name: teamspeak
+        image: teamspeak:3.13.6
+        # https://support.teamspeak.com/hc/en-us/articles/360002712257-Which-ports-does-the-TeamSpeak-3-server-use-
+        env:
+        - name: TS3SERVER_LICENSE
+          value: accept
+        ports:
+        - containerPort: 9987
+          protocol: "UDP"
+          name: voice
+        - containerPort: 10011
+          name: filetransfer
+        - containerPort: 10011
+          name: serverquery-raw
+        - containerPort: 10022
+          name: serverquery-ssh
+        - containerPort: 10080
+          name: webquery-http
+        - containerPort: 10443
+          name: webquery-https
+        - containerPort: 41144
+          name: tsdns
+  volumeClaimTemplates:
+  - metadata:
+      name: teamspeak-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 128M

@@ -49,6 +49,8 @@ def parse_manifests(paths: List[Path]) -> List[dict]:
             with open(path, "r", encoding="utf-8") as f:
                 documents = yaml.safe_load_all(f)
                 for document in documents:
+                    if document is None:
+                        continue
                     if document["kind"].endswith("List"):
                         # Easier to deal with unwrapped lists
                         manifests.extend(document["items"])
@@ -143,7 +145,7 @@ def deploy_manifests(
 
     kubectl_apply(filter_manifests("ClusterRole", "Role", "ServiceAccount"))
     kubectl_apply(filter_manifests("ClusterRoleBinding", "RoleBinding"))
-    kubectl_apply(filter_manifests("ConfigMap", "Secret"))
+    kubectl_apply(filter_manifests("ConfigMap", "Secret", "Service"))
     kubectl_apply(manifests)
 
 
