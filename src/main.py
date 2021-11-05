@@ -9,6 +9,7 @@ from typing import List
 
 import kubernetes.client  # type: ignore
 import kubernetes.config  # type: ignore
+import tenacity
 import yaml
 
 
@@ -67,17 +68,30 @@ def kubectl_apply(manifests: List[dict]) -> None:
         message += "..."
         print(message)
 
-    try:
-        subprocess.run(
-            ["kubectl", "apply", "-f", "-"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            input=yaml.dump_all(manifests).encode("utf-8"),
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print("\n".join(("kubectl apply failed:", e.stdout.decode("utf-8"), e.stderr.decode("utf-8"))))
-        raise
+    for attempt in tenacity.Retrying(
+        stop=tenacity.stop_after_delay(300),
+        wait=tenacity.wait_exponential(multiplier=2, max=10),
+    ):
+        with attempt:
+            try:
+                subprocess.run(
+                    ["kubectl", "apply", "-f", "-"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    input=yaml.dump_all(manifests).encode("utf-8"),
+                    check=True,
+                )
+            except subprocess.CalledProcessError as e:
+                print(
+                    "\n".join(
+                        (
+                            "kubectl apply failed:",
+                            e.stdout.decode("utf-8"),
+                            e.stderr.decode("utf-8"),
+                        )
+                    )
+                )
+                raise
     print(f"Applied {len(manifests)} manifest(s) successfully")
 
 
