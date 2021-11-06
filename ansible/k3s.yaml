@@ -10,7 +10,7 @@
 
   - name: enable iscsid
     systemd:
-      name: iscid
+      name: iscsid
       state: started
       enabled: true
     become: true
