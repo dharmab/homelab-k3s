@@ -55,7 +55,7 @@ spec:
         - containerPort: 9987
           protocol: UDP
           name: voice
-        - containerPort: 10011
+        - containerPort: 30033
           name: filetransfer
         - containerPort: 10011
           name: serverquery-raw
@@ -73,6 +73,7 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: teamspeak-data
+      namespace: teamspeak
     spec:
       accessModes:
       - ReadWriteOnce

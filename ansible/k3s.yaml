@@ -8,6 +8,13 @@
       - open-iscsi
     become: true
 
+  - name: enable iscsid
+    systemd:
+      name: iscid
+      state: started
+      enabled: true
+    become: true
+
   - name: create k3s directory
     file:
       path: /opt/k3s/bin
