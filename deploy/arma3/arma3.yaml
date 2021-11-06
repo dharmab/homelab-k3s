@@ -66,7 +66,7 @@ spec:
           - "$(USERNAME)"
           - "$(PASSWORD)"
           - +force_install_dir
-          - /opt/arma3
+          - /opt/steam/arma3
           - +app_update
         env:
         - name: USERNAME
@@ -79,6 +79,9 @@ spec:
             secretKeyRef:
               name: steam-account
               key: password
+        volumeMounts:
+        - name: steamcmd-data
+          mountPath: /opt/steam
       containers:
       - name: arma3
         image: steamcmd/steamcmd
@@ -98,10 +101,13 @@ spec:
         - containerPort: 2306
           protocol: UDP
           name: battleye
-
+        volumeMounts:
+        - name: steamcmd-data
+          mountPath: /opt/steam
   volumeClaimTemplates:
   - metadata:
       name: steamcmd-data
+      namespace: arma3
     spec:
       accessModes:
       - ReadWriteOnce
@@ -121,7 +127,6 @@ metadata:
 stringData:
   username: "{{ arma3.steamcmd.username }}"
   password: "{{ arma3.steamcmd.password }}"
-immutable: true
 ---
 apiVersion: v1
 kind: Secret
@@ -139,7 +144,6 @@ stringData:
     BattleEye = 0;
     statisticsEnabled = 0;
     verifySignatures = 0;
-immutable: true
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -205,4 +209,3 @@ data:
             precisionAI = 0.25;
         };
     };
-immutable: true

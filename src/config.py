@@ -11,6 +11,7 @@ class SteamCmd(pydantic.BaseModel):
 
 
 class Arma3(pydantic.BaseModel):
+    hostname: str
     admin_password: pydantic.SecretStr
     server_password: pydantic.SecretStr
     server_command_password: pydantic.SecretStr
