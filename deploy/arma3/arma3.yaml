@@ -1,0 +1,202 @@
+# https://community.bistudio.com/wiki/Arma_3:_Dedicated_Server
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: arma3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: arma3
+  namespace: arma3
+  labels:
+    app.kubernetes.io/name: arma3
+spec:
+  type: NodePort
+  ports:
+  - name: game
+    port: 2302
+    protocol: UDP
+    targetPort: game
+  - name: steam-query
+    port: 2303
+    protocol: UDP
+    targetPort: steam-query
+  - name: steam-master
+    port: 2304
+    protocol: UDP
+    targetPort: steam-master
+  # VON port is reserved for legacy reasons, although the actual VON traffic
+  # was moved to the game's port to work around NAT problems
+  - name: von
+    port: 2305
+    protocol: UDP
+    targetPort: von
+  - name: battleye
+    port: 2306
+    protocol: UDP
+    targetPort: battleye
+  selector:
+    app.kubernetes.io/name: arma3
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: arma3
+  namespace: arma3
+  labels:
+    app.kubernetes.io/name: arma3
+spec:
+  serviceName: arma3
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: arma3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: arma3
+    spec:
+      initcontainers:
+      - name: steamcmd
+        image: steamcmd/steamcmd
+        args: +login anonymous +force_install_dir /arma3 +app_update
+        env:
+        - name: USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: username
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: password
+      containers:
+      - name: arma3
+        image: steamcmd/steamcmd
+        ports:
+        - containerPort: 2302
+          protocol: UDP
+          name: game
+        - containerPort: 2303
+          protocol: UDP
+          name: steam-query
+        - containerPort: 2304
+          protocol: UDP
+          name: steam-master
+        - containerPort: 2305
+          protocol: UDP
+          name: von
+        - containerPort: 2306
+          protocol: UDP
+          name: battleye
+
+  volumeClaimTemplates:
+  - metadata:
+      name: steamcmd-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 32G
+        limits:
+          storage: 196G
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: steam-account
+  namespace: arma3
+stringData:
+  username: "{{ arma3.steamcmd_username }}"
+  password: "{{ arma3.steamcmd_password }}"
+immutable: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: arma3
+  namespace: arma3
+stringData:
+  server.cfg: |
+    # https://community.bistudio.com/wiki/Arma_3:_Server_Config_File
+    passwordAdmin = "{{ arma3.admin_password }}";
+    password = "{{ arma3.server_password }}";
+    serverCommandPassword = "{{ arma3.server_command_password }}";
+    hostname = "{{ arma3.hostname }}";
+    disableVoN = 1;
+    BattleEye = 0;
+    statisticsEnabled = 0;
+    verifySignatures = 0;
+immutable: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arma3-profiles
+  namespace: arma3
+data:
+  server.Arma3Profile: |
+    class DifficultyPresets
+    {
+        class CustomDifficulty
+        {
+            class Options
+            {
+                /* Simulation */
+
+                reducedDamage = 0;		// Reduced damage
+
+                /* Situational awareness */
+
+                groupIndicators = 0;	// Group indicators (0 = never, 1 = limited distance, 2 = always)
+                friendlyTags = 0;		// Friendly name tags (0 = never, 1 = limited distance, 2 = always)
+                enemyTags = 0;			// Enemy name tags (0 = never, 1 = limited distance, 2 = always)
+                detectedMines = 0;		// Detected mines (0 = never, 1 = limited distance, 2 = always)
+                commands = 0;			// Commands (0 = never, 1 = fade out, 2 = always)
+                waypoints = 0;			// Waypoints (0 = never, 1 = fade out, 2 = always)
+                tacticalPing = 1;		// Tactical ping (0 = disable, 1 = enable)
+
+                /* Personal awareness */
+
+                weaponInfo = 2;			// Weapon info (0 = never, 1 = fade out, 2 = always)
+                stanceIndicator = 2;	// Stance indicator (0 = never, 1 = fade out, 2 = always)
+                staminaBar = 1;			// Stamina bar
+                weaponCrosshair = 0;	// Weapon crosshair
+                visionAid = 0;			// Vision aid
+
+                /* View */
+
+                thirdPersonView = 1;	// 3rd person view (0 = disabled, 1 = enabled, 2 = enabled for vehicles only (Since  Arma 3 v1.99))
+                cameraShake = 1;		// Camera shake
+
+                /* Multiplayer */
+
+                scoreTable = 0;			// Score table
+                deathMessages = 0;		// Killed by
+                vonID = 1;				// VoN ID
+
+                /* Misc */
+
+                mapContent = 0;			// Extended map content
+                autoReport = 0;			// (former autoSpot) Automatic reporting of spotted enemied by players only. This doesn't have any effect on AIs.
+                multipleSaves = 1;		// Multiple saves
+            };
+
+            // aiLevelPreset defines AI skill level and is counted from 0 and can have following values: 0 (Low), 1 (Normal), 2 (High), 3 (Custom).
+            // when 3 (Custom) is chosen, values of skill and precision are taken from the class CustomAILevel.
+            aiLevelPreset = 3;
+        };
+
+        class CustomAILevel
+        {
+            skillAI = 0.90;
+            precisionAI = 0.25;
+        };
+    };
+immutable: true
