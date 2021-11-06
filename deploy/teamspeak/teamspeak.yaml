@@ -53,7 +53,7 @@ spec:
           value: accept
         ports:
         - containerPort: 9987
-          protocol: "UDP"
+          protocol: UDP
           name: voice
         - containerPort: 10011
           name: filetransfer
@@ -67,6 +67,9 @@ spec:
           name: webquery-https
         - containerPort: 41144
           name: tsdns
+        volumeMounts:
+        - name: teamspeak-data
+          mountPath: /var/ts3server
   volumeClaimTemplates:
   - metadata:
       name: teamspeak-data

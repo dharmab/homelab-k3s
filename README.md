@@ -21,3 +21,11 @@ kubectl get node
 
 If you stop the VM, you can use `vm-up` to start it again. You only need to
 run `make lab-up` if you destroy the VM and need to recreate it again.
+
+TODO
+
+- Validated config files
+- Uninstaller hooks
+- Integration tests
+- Documentation
+- YAML linting and formatting
