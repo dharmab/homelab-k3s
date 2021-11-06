@@ -58,10 +58,16 @@ spec:
       labels:
         app.kubernetes.io/name: arma3
     spec:
-      initcontainers:
+      initContainers:
       - name: steamcmd
         image: steamcmd/steamcmd
-        args: +login anonymous +force_install_dir /arma3 +app_update
+        args:
+          - +login
+          - "$(USERNAME)"
+          - "$(PASSWORD)"
+          - +force_install_dir
+          - /opt/arma3
+          - +app_update
         env:
         - name: USERNAME
           valueFrom:
@@ -113,8 +119,8 @@ metadata:
   name: steam-account
   namespace: arma3
 stringData:
-  username: "{{ arma3.steamcmd_username }}"
-  password: "{{ arma3.steamcmd_password }}"
+  username: "{{ arma3.steamcmd.username }}"
+  password: "{{ arma3.steamcmd.password }}"
 immutable: true
 ---
 apiVersion: v1

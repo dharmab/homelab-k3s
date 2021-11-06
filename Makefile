@@ -33,7 +33,7 @@ $(KUBECONFIG): install-dependencies
 	poetry run ./hack/kubeconfig.py --kubeconfig $(KUBECONFIG)
 
 cluster-deploy:
-	poetry run ./src/main.py deploy -m deploy/
+	poetry run ./src/main.py -c $(LABCONFIG) deploy -m deploy/
 
 clean:
 	rm -f $(KUBECONFIG)

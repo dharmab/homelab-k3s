@@ -10,6 +10,9 @@ PyYAML = "^6.0"
 kubernetes = "^19.15.0"
 Jinja2 = "^3.0.2"
 tenacity = "^8.0.1"
+jsonschema = "^4.2.1"
+pydantic = "^1.8.2"
+yarl = "^1.7.2"
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"
@@ -18,8 +21,11 @@ mypy = "^0.910"
 pylint = "^2.11.1"
 types-PyYAML = "^6.0.0"
 
+[tool.pylint.MASTER]
+extension-pkg-whitelist = "pydantic"
+
 [tool.pylint."MESSAGES CONTROL"]
-disable = "missing-module-docstring,missing-class-docstring,missing-function-docstring,invalid-name,wrong-import-order"
+disable = "missing-module-docstring,missing-class-docstring,missing-function-docstring,invalid-name,wrong-import-order,too-few-public-methods"
 
 [tool.mypy]
 disallow_untyped_defs = "True"

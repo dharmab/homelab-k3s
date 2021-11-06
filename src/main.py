@@ -5,12 +5,15 @@ import enum
 import subprocess
 from pathlib import Path
 from time import sleep
-from typing import List
+from typing import List, Sequence
 
+import jinja2
 import kubernetes.client  # type: ignore
 import kubernetes.config  # type: ignore
 import tenacity
 import yaml
+
+from config import LabConfig
 
 
 class Command(enum.Enum):
@@ -20,6 +23,15 @@ class Command(enum.Enum):
 def _parse_args() -> argparse.Namespace:
     """Parse command line arguments"""
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-c",
+        "--config",
+        action="store",
+        metavar="FILE",
+        required=True,
+        help="Lab config file",
+    )
+
     subparsers = parser.add_subparsers(required=True, dest="command")
 
     deploy_parser = subparsers.add_parser("deploy", help="Deploy Kubernetes manifests")
@@ -36,26 +48,31 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def parse_manifests(paths: List[Path]) -> List[dict]:
+def parse_manifests(paths: Sequence[Path], *, config: LabConfig) -> List[dict]:
     """
     Load the manifest content from the given paths.
     """
     manifests: List[dict] = []
     for path in paths:
         if path.is_dir():
-            manifests.extend(parse_manifests(list(path.iterdir())))
+            manifests.extend(parse_manifests(list(path.iterdir()), config=config))
         elif path.is_file():
             print(f"Loading manifest {path}...")
             with open(path, "r", encoding="utf-8") as f:
-                documents = yaml.safe_load_all(f)
-                for document in documents:
-                    if document is None:
-                        continue
-                    if document["kind"].endswith("List"):
-                        # Easier to deal with unwrapped lists
-                        manifests.extend(document["items"])
-                    else:
-                        manifests.append(document)
+                raw_document = f.read()
+            try:
+                template = jinja2.Template(raw_document).render(config.dict())
+            except jinja2.exceptions.TemplateSyntaxError:
+                template = raw_document
+            documents = yaml.safe_load_all(template)
+            for document in documents:
+                if document is None:
+                    continue
+                if document["kind"].endswith("List"):
+                    # Easier to deal with unwrapped lists
+                    manifests.extend(document["items"])
+                else:
+                    manifests.append(document)
     return manifests
 
 
@@ -141,7 +158,7 @@ def deploy_manifests(
         _wait_for_crd(
             crd_manifest["metadata"]["name"], api_extensions_api=api_extensions_api
         )
-    print("Verified {len(crd_manifests)} CustomResourceDefinitions")
+    print(f"Verified {len(crd_manifests)} CustomResourceDefinitions")
 
     kubectl_apply(filter_manifests("ClusterRole", "Role", "ServiceAccount"))
     kubectl_apply(filter_manifests("ClusterRoleBinding", "RoleBinding"))
@@ -154,9 +171,12 @@ def main() -> None:
     args = _parse_args()
     if args.command == "deploy":
         kubernetes.config.load_kube_config()
+        config = LabConfig.parse_file(Path(args.config))
 
         deploy_manifests(
-            customize_manifests(parse_manifests([Path(m) for m in args.manifests])),
+            customize_manifests(
+                parse_manifests([Path(m) for m in args.manifests], config=config)
+            ),
             api_extensions_api=kubernetes.client.ApiextensionsV1Api(),
         )
 
