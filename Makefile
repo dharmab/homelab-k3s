@@ -30,10 +30,13 @@ vm-shell:
 
 $(KUBECONFIG): install-dependencies
 	vagrant ssh -c "sudo cat /etc/rancher/k3s/k3s.yaml" > $(KUBECONFIG)
-	poetry run ./hack/kubeconfig.py --kubeconfig $(KUBECONFIG)
+	poetry run ./lab/kubeconfig.py --kubeconfig $(KUBECONFIG)
 
 cluster-deploy:
-	poetry run ./src/main.py -c $(LABCONFIG) deploy -m deploy/
+	poetry run ./lab/main.py -c $(LABCONFIG) deploy -m deploy/
+
+cluster-test:
+	poetry run pytest tests/ -m integration
 
 clean:
 	rm -f $(KUBECONFIG)

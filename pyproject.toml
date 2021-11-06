@@ -20,12 +20,19 @@ isort = "^5.9.3"
 mypy = "^0.910"
 pylint = "^2.11.1"
 types-PyYAML = "^6.0.0"
+pytest = "^6.2.5"
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = "pydantic"
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = "missing-module-docstring,missing-class-docstring,missing-function-docstring,invalid-name,wrong-import-order,too-few-public-methods"
+disable = "missing-module-docstring,missing-class-docstring,missing-function-docstring,invalid-name,wrong-import-order,too-few-public-methods,line-too-long"
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers"
+markers = [
+    "integration"
+]
 
 [tool.mypy]
 disallow_untyped_defs = "True"
