@@ -2,6 +2,8 @@
 
 import argparse
 import enum
+import json
+import os
 import subprocess
 from pathlib import Path
 from time import sleep
@@ -29,6 +31,7 @@ def _parse_args() -> argparse.Namespace:
         action="store",
         metavar="FILE",
         required=True,
+        default=os.environ.get("LABCONFIG"),
         help="Lab config file",
     )
 
@@ -61,7 +64,9 @@ def parse_manifests(paths: Sequence[Path], *, config: LabConfig) -> List[dict]:
             with open(path, "r", encoding="utf-8") as f:
                 raw_document = f.read()
             try:
-                template = jinja2.Template(raw_document).render(config.dict())
+                template = jinja2.Template(raw_document).render(
+                    json.loads(config.json_with_plaintext_secrets())
+                )
             except jinja2.exceptions.TemplateSyntaxError:
                 template = raw_document
             documents = yaml.safe_load_all(template)
@@ -171,6 +176,7 @@ def main() -> None:
     args = _parse_args()
     if args.command == "deploy":
         kubernetes.config.load_kube_config()
+        assert args.config
         config = LabConfig.parse_file(Path(args.config))
 
         deploy_manifests(

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Sequence, Tuple
 
 import kubernetes.client  # type: ignore
 import kubernetes.client.models  # type: ignore
@@ -14,6 +14,18 @@ def load_kube_config() -> None:
 @pytest.fixture(scope="session", name="core_api")
 def setup_core_api() -> kubernetes.client.CoreV1Api:
     return kubernetes.client.CoreV1Api()
+
+
+@pytest.fixture(scope="session", name="apps_api")
+def setup_apps_api() -> kubernetes.client.CoreV1Api:
+    return kubernetes.client.AppsV1Api()
+
+
+@pytest.fixture(name="all_namespaces")
+def list_all_namespaces(
+    core_api: kubernetes.client.CoreV1Api,
+) -> Sequence[kubernetes.client.models.V1Namespace]:
+    return core_api.list_namespace().items
 
 
 @pytest.mark.integration
@@ -79,20 +91,71 @@ def _is_pod_ready(pod: kubernetes.client.models.V1Pod) -> Tuple[bool, str]:
 
 
 @pytest.mark.integration
-def test_all_pods_ready(core_api: kubernetes.client.CoreV1Api) -> None:
+def test_all_pods_ready(
+    core_api: kubernetes.client.CoreV1Api,
+    all_namespaces: Sequence[kubernetes.client.models.V1Namespace],
+) -> None:
     are_all_pods_ready = True
-    for namespace in core_api.list_namespace().items:
+    for namespace in all_namespaces:
         for pod in core_api.list_namespaced_pod(namespace.metadata.name).items:
-            _is_ready, message = _is_pod_ready(pod)
-            if not _is_ready:
+            is_ready, message = _is_pod_ready(pod)
+            if not is_ready:
                 are_all_pods_ready = False
                 print(message)
     assert are_all_pods_ready
 
 
+@pytest.mark.integration
 def test_no_pods_in_unused_namespaces(core_api: kubernetes.client.CoreV1Api) -> None:
     for namespace in ("default", "kube-public", "kube-node-lease"):
         assert not core_api.list_namespaced_pod(namespace).items
+
+
+def _is_deployment_ready(
+    deployment: kubernetes.client.models.V1Deployment,
+) -> Tuple[bool, str]:
+    """
+    Determine if the given Deployment is Ready, i.e. at least one replica Pod
+    of the Deployment is Ready.
+
+    :return: First value is True if the Deployment is Ready and false
+    otherwise. Second value is the reason for the result.
+    """
+    identity = f"Deployment {deployment.metadata.name} in Namespace {deployment.metadata.namespace}"
+    if not hasattr(deployment, "status"):
+        return False, f"{identity} status is nil"
+    if (
+        not hasattr(deployment.status, "conditions")
+        or deployment.status.conditions is None
+    ):
+        return False, f"{identity} status.conditions is nil"
+
+    for condition in deployment.status.conditions:
+        if condition.type in ("Ready", "Available") and condition.status != "True":
+            message = f"{identity} is not Ready: {condition.type=} {condition.status=}"
+            if hasattr(condition, "reason") and condition.reason:
+                message += " {condition.reason=}"
+            if hasattr(condition, "mssage") and condition.message:
+                message += " {condition.message=}"
+            return False, message
+    return True, f"{identity} is Ready"
+
+
+@pytest.mark.integration
+def test_are_all_deployments_ready(
+    apps_api: kubernetes.client.AppsV1Api,
+    all_namespaces: Sequence[kubernetes.client.models.V1Namespace],
+) -> None:
+    are_all_deployments_ready = True
+    for namespace in all_namespaces:
+        for deployment in apps_api.list_namespaced_deployment(
+            namespace.metadata.name
+        ).items:
+            is_ready, message = _is_deployment_ready(deployment)
+            if not is_ready:
+                are_all_deployments_ready = False
+                print(message)
+    assert are_all_deployments_ready
 
 
 # TODO test_are_all_deployments_ready
@@ -114,9 +177,12 @@ def test_no_pods_in_unused_namespaces(core_api: kubernetes.client.CoreV1Api) -> 
 
 
 @pytest.mark.integration
-def test_persistent_volume_claims_bound(core_api: kubernetes.client.CoreV1Api) -> None:
+def test_persistent_volume_claims_bound(
+    core_api: kubernetes.client.CoreV1Api,
+    all_namespaces: Sequence[kubernetes.client.models.V1Namespace],
+) -> None:
     are_all_claims_bound = True
-    for namespace in core_api.list_namespace().items:
+    for namespace in all_namespaces:
         for claim in core_api.list_namespaced_persistent_volume_claim(
             namespace.metadata.name
         ).items:
