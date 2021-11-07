@@ -42,8 +42,8 @@ clean:
 	rm -f $(KUBECONFIG)
 
 format:
-	black **/*.py
 	isort **/*.py
+	black **/*.py
 
 check:
 	black --check **/*.py

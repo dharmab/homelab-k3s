@@ -4,9 +4,13 @@ import kubernetes.client  # type: ignore
 import kubernetes.config  # type: ignore
 import pytest
 from kubernetes.client import AppsV1Api, CoreV1Api
-from kubernetes.client.models import V1DaemonSet  # type: ignore
-from kubernetes.client.models import (V1Deployment, V1Namespace, V1Pod,
-                                      V1StatefulSet)
+from kubernetes.client.models import (  # type: ignore
+    V1DaemonSet,
+    V1Deployment,
+    V1Namespace,
+    V1Pod,
+    V1StatefulSet,
+)
 
 
 @pytest.fixture(autouse=True, scope="session")
