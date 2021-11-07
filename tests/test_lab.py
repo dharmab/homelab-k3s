@@ -1,9 +1,12 @@
 from typing import Sequence, Tuple
 
 import kubernetes.client  # type: ignore
-import kubernetes.client.models  # type: ignore
 import kubernetes.config  # type: ignore
 import pytest
+from kubernetes.client import AppsV1Api, CoreV1Api
+from kubernetes.client.models import V1DaemonSet  # type: ignore
+from kubernetes.client.models import (V1Deployment, V1Namespace, V1Pod,
+                                      V1StatefulSet)
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -12,24 +15,24 @@ def load_kube_config() -> None:
 
 
 @pytest.fixture(scope="session", name="core_api")
-def setup_core_api() -> kubernetes.client.CoreV1Api:
-    return kubernetes.client.CoreV1Api()
+def setup_core_api() -> CoreV1Api:
+    return CoreV1Api()
 
 
 @pytest.fixture(scope="session", name="apps_api")
-def setup_apps_api() -> kubernetes.client.CoreV1Api:
-    return kubernetes.client.AppsV1Api()
+def setup_apps_api() -> CoreV1Api:
+    return AppsV1Api()
 
 
 @pytest.fixture(name="all_namespaces")
 def list_all_namespaces(
-    core_api: kubernetes.client.CoreV1Api,
-) -> Sequence[kubernetes.client.models.V1Namespace]:
+    core_api: CoreV1Api,
+) -> Sequence[V1Namespace]:
     return core_api.list_namespace().items
 
 
 @pytest.mark.integration
-def test_all_nodes_ready(core_api: kubernetes.client.CoreV1Api) -> None:
+def test_all_nodes_ready(core_api: CoreV1Api) -> None:
     are_all_nodes_ready = True
     for node in core_api.list_node().items:
         for condition in node.status.conditions:
@@ -40,7 +43,7 @@ def test_all_nodes_ready(core_api: kubernetes.client.CoreV1Api) -> None:
 
 
 @pytest.mark.integration
-def _is_pod_ready(pod: kubernetes.client.models.V1Pod) -> Tuple[bool, str]:
+def _is_pod_ready(pod: V1Pod) -> Tuple[bool, str]:
     """
     Determine if the given Pod is Ready.
 
@@ -92,8 +95,8 @@ def _is_pod_ready(pod: kubernetes.client.models.V1Pod) -> Tuple[bool, str]:
 
 @pytest.mark.integration
 def test_all_pods_ready(
-    core_api: kubernetes.client.CoreV1Api,
-    all_namespaces: Sequence[kubernetes.client.models.V1Namespace],
+    core_api: CoreV1Api,
+    all_namespaces: Sequence[V1Namespace],
 ) -> None:
     are_all_pods_ready = True
     for namespace in all_namespaces:
@@ -106,13 +109,13 @@ def test_all_pods_ready(
 
 
 @pytest.mark.integration
-def test_no_pods_in_unused_namespaces(core_api: kubernetes.client.CoreV1Api) -> None:
+def test_no_pods_in_unused_namespaces(core_api: CoreV1Api) -> None:
     for namespace in ("default", "kube-public", "kube-node-lease"):
         assert not core_api.list_namespaced_pod(namespace).items
 
 
 def _is_deployment_ready(
-    deployment: kubernetes.client.models.V1Deployment,
+    deployment: V1Deployment,
 ) -> Tuple[bool, str]:
     """
     Determine if the given Deployment is Ready, i.e. at least one replica Pod
@@ -134,17 +137,17 @@ def _is_deployment_ready(
         if condition.type in ("Ready", "Available") and condition.status != "True":
             message = f"{identity} is not Ready: {condition.type=} {condition.status=}"
             if hasattr(condition, "reason") and condition.reason:
-                message += " {condition.reason=}"
+                message += f" {condition.reason=}"
             if hasattr(condition, "mssage") and condition.message:
-                message += " {condition.message=}"
+                message += f" {condition.message=}"
             return False, message
     return True, f"{identity} is Ready"
 
 
 @pytest.mark.integration
 def test_are_all_deployments_ready(
-    apps_api: kubernetes.client.AppsV1Api,
-    all_namespaces: Sequence[kubernetes.client.models.V1Namespace],
+    apps_api: AppsV1Api,
+    all_namespaces: Sequence[V1Namespace],
 ) -> None:
     are_all_deployments_ready = True
     for namespace in all_namespaces:
@@ -158,9 +161,106 @@ def test_are_all_deployments_ready(
     assert are_all_deployments_ready
 
 
-# TODO test_are_all_deployments_ready
-# TODO test_are_all_statefulsets_ready
-# TODO test_are_all_daemonsets_ready
+def _is_stateful_set_ready(stateful_set: V1StatefulSet) -> Tuple[bool, str]:
+    """
+    Determine if the given StatefulSet is Ready, i.e. at least one replica Pod
+    of the StatefulSet is Ready.
+
+    :return: First value is True if the StatefulSet is Ready and false
+    otherwise. Second value is the reason for the result.
+    """
+    identity = f"StatefulSet {stateful_set.metadata.name} in Namespace {stateful_set.metadata.namespace}"
+    if not hasattr(stateful_set, "status"):
+        return False, f"{identity} status is nil"
+    if (
+        not hasattr(stateful_set.status, "ready_replicas")
+        or stateful_set.status.ready_replicas is None
+    ):
+        return False, f"{identity} status.ready_replicas is nil"
+
+    if stateful_set.status.ready_replicas == 0:
+        return False, f"{identity} is not Ready: {stateful_set.status.ready_replicas=}"
+
+    return True, f"{identity} is Ready"
+
+
+@pytest.mark.integration
+def test_are_all_stateful_sets_ready(
+    apps_api: AppsV1Api, all_namespaces: Sequence[V1Namespace]
+) -> None:
+    are_all_stateful_sets_ready = True
+    for namespace in all_namespaces:
+        for stateful_set in apps_api.list_namespaced_stateful_set(
+            namespace.metadata.name
+        ).items:
+            is_ready, message = _is_stateful_set_ready(stateful_set)
+            if not is_ready:
+                are_all_stateful_sets_ready = False
+                print(message)
+    assert are_all_stateful_sets_ready
+
+
+def _is_daemon_set_ready(
+    daemon_set: V1DaemonSet,
+    *,
+    minimum_ratio_scheduled: float = 1.0,
+    minimum_ratio_ready: float = 1.0,
+) -> Tuple[bool, str]:
+    """
+    Determine if the given DaemonSet is scheduled, up to date and ready.
+
+    :param: minimum_ratio_ready: Percentage of DaemonSet Pods which must be
+    scheduled (in range 0.0-1.0)
+    :param: minimum_ratio_ready: Percentage of DaemonSet Pods which must be
+    ready (in range 0.0-1.0)
+    :return: First value is True if the given percentage of DaemonSet Pods are
+    Ready and false otherwise. Second value is the reason for the result.
+    """
+    identity = f"DaemonSet {daemon_set.metadata.name} in Namespace {daemon_set.metadata.namespace}"
+    if not hasattr(daemon_set, "status"):
+        return False, f"{identity} status is nil"
+
+    current_number_scheduled = daemon_set.status.current_number_scheduled or 0
+    if (
+        minimum_ratio_scheduled > 0
+        and current_number_scheduled / daemon_set.status.desired_number_scheduled
+        < minimum_ratio_scheduled
+    ):
+        return (
+            False,
+            f"{identity} is not Ready: daemon_set.status.{current_number_scheduled=} {daemon_set.status.desired_number_scheduled=}",
+        )
+
+    number_ready = daemon_set.status.number_ready or 0
+    if (
+        minimum_ratio_ready > 0
+        and number_ready / daemon_set.status.desired_number_scheduled
+        < minimum_ratio_ready
+    ):
+        return (
+            False,
+            f"{identity} is not Ready: daemon_set.status.{number_ready=} {daemon_set.status.desired_number_scheduled=}",
+        )
+
+    return True, f"{identity} is Ready"
+
+
+@pytest.mark.integration
+def test_are_all_daemon_sets_ready(
+    apps_api: AppsV1Api, all_namespaces: Sequence[V1Namespace]
+) -> None:
+    are_all_daemon_sets_ready = True
+    for namespace in all_namespaces:
+        for daemon_set in apps_api.list_namespaced_daemon_set(
+            namespace.metadata.name
+        ).items:
+            is_ready, message = _is_daemon_set_ready(daemon_set)
+            if not is_ready:
+                are_all_daemon_sets_ready = False
+                print(message)
+    assert are_all_daemon_sets_ready
+
+
 # TODO test_are_all_jobs_ok
 # TODO test_core_dns
 # TODO test_prometheus_operator
@@ -178,8 +278,8 @@ def test_are_all_deployments_ready(
 
 @pytest.mark.integration
 def test_persistent_volume_claims_bound(
-    core_api: kubernetes.client.CoreV1Api,
-    all_namespaces: Sequence[kubernetes.client.models.V1Namespace],
+    core_api: CoreV1Api,
+    all_namespaces: Sequence[V1Namespace],
 ) -> None:
     are_all_claims_bound = True
     for namespace in all_namespaces:
