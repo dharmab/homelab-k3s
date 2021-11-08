@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import kubernetes.client  # type: ignore
 import kubernetes.config  # type: ignore
@@ -118,6 +118,17 @@ def test_no_pods_in_unused_namespaces(core_api: CoreV1Api) -> None:
         assert not core_api.list_namespaced_pod(namespace).items
 
 
+def _get_deployment(
+    *, namespace: str, name: str, apps_api: AppsV1Api
+) -> Optional[V1Deployment]:
+    try:
+        return apps_api.read_namespaced_deployment(name, namespace)
+    except kubernetes.client.exceptions.ApiException as e:
+        if e.status == 404:
+            return None
+        raise
+
+
 def _is_deployment_ready(
     deployment: V1Deployment,
 ) -> Tuple[bool, str]:
@@ -165,6 +176,17 @@ def test_are_all_deployments_ready(
     assert are_all_deployments_ready
 
 
+def _get_stateful_set(
+    *, namespace: str, name: str, apps_api: AppsV1Api
+) -> Optional[V1StatefulSet]:
+    try:
+        return apps_api.read_namespaced_stateful_set(name, namespace)
+    except kubernetes.client.exceptions.ApiException as e:
+        if e.status == 404:
+            return None
+        raise
+
+
 def _is_stateful_set_ready(stateful_set: V1StatefulSet) -> Tuple[bool, str]:
     """
     Determine if the given StatefulSet is Ready, i.e. at least one replica Pod
@@ -202,6 +224,17 @@ def test_are_all_stateful_sets_ready(
                 are_all_stateful_sets_ready = False
                 print(message)
     assert are_all_stateful_sets_ready
+
+
+def _get_daemon_set(
+    *, namespace: str, name: str, apps_api: AppsV1Api
+) -> Optional[V1DaemonSet]:
+    try:
+        return apps_api.read_namespaced_daemon_set(name, namespace)
+    except kubernetes.client.exceptions.ApiException as e:
+        if e.status == 404:
+            return None
+        raise
 
 
 def _is_daemon_set_ready(
@@ -265,19 +298,83 @@ def test_are_all_daemon_sets_ready(
     assert are_all_daemon_sets_ready
 
 
+@pytest.mark.integration
+def test_core_dns(apps_api: AppsV1Api) -> None:
+    assert _get_deployment(namespace="kube-system", name="coredns", apps_api=apps_api)
+
+
+@pytest.mark.integration
+def test_metrics_server(apps_api: AppsV1Api) -> None:
+    assert _get_deployment(
+        namespace="kube-system", name="metrics-server", apps_api=apps_api
+    )
+
+
+@pytest.mark.integration
+def test_local_path_provisioner(apps_api: AppsV1Api) -> None:
+    assert _get_deployment(
+        namespace="kube-system", name="local-path-provisioner", apps_api=apps_api
+    )
+
+
+@pytest.mark.integration
+def test_prometheus_operator(apps_api: AppsV1Api) -> None:
+    for deployment_name in (
+        "prometheus-operator",
+        "prometheus-adapter",
+        "kube-state-metrics",
+        "blackbox-exporter",
+        "grafana",
+    ):
+        assert _get_deployment(
+            namespace="monitoring", name=deployment_name, apps_api=apps_api
+        )
+    for stateful_set_name in ("prometheus-k8s", "alertmanager-main"):
+        assert _get_stateful_set(
+            namespace="monitoring", name=stateful_set_name, apps_api=apps_api
+        )
+    assert _get_daemon_set(
+        namespace="monitoring", name="node-exporter", apps_api=apps_api
+    )
+
+
+@pytest.mark.integration
+def test_longhorn(apps_api: AppsV1Api) -> None:
+    for deployment_name in (
+        "longhorn-ui",
+        "longhorn-driver-deployer",
+        "csi-attacher",
+        "csi-provisioner",
+        "csi-snapshotter",
+        "csi-resizer",
+    ):
+        assert _get_deployment(
+            namespace="longhorn-system", name=deployment_name, apps_api=apps_api
+        )
+    for daemon_set_name in ("longhorn-manager", "longhorn-csi-plugin"):
+        assert _get_daemon_set(
+            namespace="longhorn-system", name=daemon_set_name, apps_api=apps_api
+        )
+
+
+@pytest.mark.integration
+def test_ingress_nginx(apps_api: AppsV1Api) -> None:
+    assert _get_deployment(
+        namespace="ingress-nginx", name="ingress-nginx-controller", apps_api=apps_api
+    )
+
+
+@pytest.mark.integration
+def test_arma3(apps_api: AppsV1Api) -> None:
+    assert _get_stateful_set(namespace="arma3", name="arma3", apps_api=apps_api)
+
+
+@pytest.mark.integration
+def test_teamspeak(apps_api: AppsV1Api) -> None:
+    assert _get_stateful_set(namespace="teamspeak", name="teamspeak", apps_api=apps_api)
+
+
 # TODO test_are_all_jobs_ok
-# TODO test_core_dns
-# TODO test_prometheus_operator
-# TODO test_prometheus
-# TODO test_prometheus_adapter
-# TODO test_node_exporter
-# TODO test_blackbox_exporter
-# TODO test_alertmanager
-# TODO test_grafana
-# TODO test_longhorn
-# TODO test_ingress_nginx
-# TODO test_arma3
-# TODO test_teamspeak
 
 
 @pytest.mark.integration
