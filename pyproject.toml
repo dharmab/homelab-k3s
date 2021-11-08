@@ -26,7 +26,7 @@ pytest = "^6.2.5"
 extension-pkg-whitelist = "pydantic"
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = "missing-module-docstring,missing-class-docstring,missing-function-docstring,invalid-name,wrong-import-order,too-few-public-methods,line-too-long,no-member"
+disable = "wrong-import-order,missing-module-docstring,missing-class-docstring,missing-function-docstring,invalid-name,too-few-public-methods,line-too-long"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"

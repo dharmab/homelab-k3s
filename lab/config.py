@@ -32,7 +32,7 @@ class ExtendedBaseModel(pydantic.BaseModel):
         def plaintext_encoder(obj: Any) -> Any:
             if isinstance(obj, (pydantic.SecretStr, pydantic.SecretBytes)):
                 return obj.get_secret_value()
-            return pydantic.json.pydantic_encoder
+            return pydantic.json.pydantic_encoder  # pylint: disable=no-member
 
         return self.json(*args, encoder=plaintext_encoder, **kwargs)
 

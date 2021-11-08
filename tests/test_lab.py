@@ -48,6 +48,8 @@ def test_all_nodes_ready(core_api: CoreV1Api) -> None:
 
 @pytest.mark.integration
 def _is_pod_ready(pod: V1Pod) -> Tuple[bool, str]:
+    # pylint: disable=too-many-branches,too-many-nested-blocks
+    # Pods are complicated LOL!
     """
     Determine if the given Pod is Ready.
 
