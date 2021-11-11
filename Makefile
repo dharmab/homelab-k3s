@@ -44,9 +44,11 @@ clean:
 format:
 	isort **/*.py
 	black **/*.py
+	find . '(' -name "*.yml" -or -name "*.yaml" ')' -exec yamlfmt {} --write ';'
 
 check:
 	black --check **/*.py
 	isort --check **/*.py
+	yamllint .
 	mypy **/*.py
 	pylint **/*.py

@@ -62,12 +62,12 @@ spec:
       - name: steamcmd
         image: steamcmd/steamcmd
         args:
-          - +login
-          - "$(USERNAME)"
-          - "$(PASSWORD)"
-          - +force_install_dir
-          - /opt/steam/arma3
-          - +app_update
+        - +login
+        - "$(USERNAME)"
+        - "$(PASSWORD)"
+        - +force_install_dir
+        - /opt/steam/arma3
+        - +app_update
         env:
         - name: USERNAME
           valueFrom:

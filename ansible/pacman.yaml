@@ -7,7 +7,7 @@
       section: options
       option: ParallelDownloads
       value: "5"
-    become: yes
+    become: true
 
   - name: update pacman cache
     pacman:
@@ -38,7 +38,7 @@
       upgrade: true
       update_cache: true
     notify:
-      - reboot system
+    - reboot system
     become: true
 
   - name: install Intel microcode
@@ -47,7 +47,7 @@
     when: "'GenuineIntel' in ansible_processor"
     become: true
     notify:
-      - reboot system
+    - reboot system
 
   - name: install AMD microcode
     pacman:
@@ -55,14 +55,14 @@
     when: "'AuthenticAMD' in ansible_processor"
     become: true
     notify:
-      - reboot system
+    - reboot system
 
   - name: install firmware
     pacman:
       name: linux-firmware
     become: true
     notify:
-      - reboot system
+    - reboot system
 
   handlers:
   - name: reboot system

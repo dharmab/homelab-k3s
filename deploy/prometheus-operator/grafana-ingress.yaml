@@ -6,12 +6,12 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - http:
-        paths:
-        - pathType: Prefix
-          path: /grafana
-          backend:
-            service:
-              name: grafana
-              port:
-                number: 3000
+  - http:
+      paths:
+      - pathType: Prefix
+        path: /grafana
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000

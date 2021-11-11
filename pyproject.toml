@@ -21,12 +21,13 @@ mypy = "^0.910"
 pylint = "^2.11.1"
 types-PyYAML = "^6.0.0"
 pytest = "^6.2.5"
+yamllint = "^1.26.3"
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = "pydantic"
 
 [tool.pylint."MESSAGES CONTROL"]
-disable = "wrong-import-order,missing-module-docstring,missing-class-docstring,missing-function-docstring,invalid-name,too-few-public-methods,line-too-long"
+disable = "fixme,wrong-import-order,missing-module-docstring,missing-class-docstring,missing-function-docstring,invalid-name,too-few-public-methods,line-too-long"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers"

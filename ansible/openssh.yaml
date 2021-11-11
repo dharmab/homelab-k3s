@@ -11,14 +11,14 @@
       validate: sshd -t -f %s
     become: true
     notify:
-      - restart openssh server
+    - restart openssh server
 
   - name: disable weak openssh moduli
     script:
       cmd: openssh/disable_weak_moduli.sh
     become: true
     notify:
-      - restart openssh server
+    - restart openssh server
 
   - name: enable openssh server
     systemd:

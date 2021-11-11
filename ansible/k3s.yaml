@@ -33,7 +33,7 @@
       group: root
     become: true
     notify:
-      - restart k3s server
+    - restart k3s server
 
   - name: create k3s server systemd service
     copy:
@@ -44,7 +44,7 @@
       mode: 0644
     become: true
     notify:
-      - restart k3s server
+    - restart k3s server
 
   - name: enable k3s server
     systemd:

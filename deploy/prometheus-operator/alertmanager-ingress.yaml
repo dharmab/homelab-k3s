@@ -6,12 +6,12 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - http:
-        paths:
-        - pathType: Prefix
-          path: /alertmanager/
-          backend:
-            service:
-              name: alertmanager-main
-              port:
-                number: 9093
+  - http:
+      paths:
+      - pathType: Prefix
+        path: /alertmanager/
+        backend:
+          service:
+            name: alertmanager-main
+            port:
+              number: 9093
