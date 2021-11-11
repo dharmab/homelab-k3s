@@ -34,6 +34,15 @@ def _parse_args() -> argparse.Namespace:
         default=os.environ.get("LABCONFIG"),
         help="Lab config file",
     )
+    parser.add_argument(
+        "-k",
+        "--kubeconfig",
+        action="store",
+        metavar="FILE",
+        required=True,
+        default=os.environ.get("KUBECONFIG"),
+        help="Kubernetes config file",
+    )
 
     subparsers = parser.add_subparsers(required=True, dest="command")
 
@@ -175,7 +184,8 @@ def main() -> None:
     """Entrypoint function"""
     args = _parse_args()
     if args.command == "deploy":
-        kubernetes.config.load_kube_config()
+        assert args.kubeconfig
+        kubernetes.config.load_kube_config(config_file=args.kubeconfig)
         assert args.config
         config = LabConfig.parse_file(Path(args.config))
 

@@ -1,0 +1,10 @@
+.PHONY: lab-up vm-up vm-provision vm-down vm-restart vm-destroy vm-shell clean cluster-deploy format check
+
+KUBECONFIG=live/kubeconfig.yaml
+LABCONFIG=live/labconfig.json
+
+cluster-deploy:
+	poetry run ./lab/main.py -k $(KUBECONFIG) -c $(LABCONFIG) deploy -m deploy/
+
+cluster-test:
+	poetry run pytest tests/ -m integration

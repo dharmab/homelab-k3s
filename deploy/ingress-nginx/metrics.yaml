@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -10,10 +11,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: metrics
-    port: 9113
-    protocol: TCP
-    targetPort: metrics
+    - name: metrics
+      port: 9113
+      protocol: TCP
+      targetPort: metrics
   selector:
     app.kubernetes.io/name: ingress-nginx
     app.kubernetes.io/component: controller
@@ -29,12 +30,12 @@ metadata:
 spec:
   namespaceSelector:
     matchNames:
-    - ingress-nginx
+      - ingress-nginx
   selector:
     matchLabels:
       app.kubernetes.io/name: ingress-nginx
       app.kubernetes.io/component: controller
       app.kubernetes.io/service: metrics
   endpoints:
-  - port: metrics
-    interval: 15s
+    - port: metrics
+      interval: 15s

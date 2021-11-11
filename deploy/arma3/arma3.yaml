@@ -60,14 +60,14 @@ spec:
     spec:
       initContainers:
       - name: steamcmd
-        image: steamcmd/steamcmd
+        image: steamcmd/steamcmd:ubuntu-20
         args:
         - +login
         - "$(USERNAME)"
         - "$(PASSWORD)"
-        - +force_install_dir
-        - /opt/steam/arma3
-        - +app_update
+        - +force_install_dir /opt/arma3
+        - +app_update 233780
+        - +quit
         env:
         - name: USERNAME
           valueFrom:
@@ -80,11 +80,19 @@ spec:
               name: steam-account
               key: password
         volumeMounts:
-        - name: steamcmd-data
-          mountPath: /opt/steam
+        - name: steam
+          mountPath: /root/.steam
+        - name: arma3
+          mountPath: /opt/arma3
       containers:
       - name: arma3
-        image: steamcmd/steamcmd
+        image: ubuntu:20.04
+        workingDir: /opt/arma3
+        command:
+        - /opt/arma3/arma3server_x64
+        args:
+        - -name=server
+        - -config=/etc/arma3/server.cfg
         ports:
         - containerPort: 2302
           protocol: UDP
@@ -102,11 +110,31 @@ spec:
           protocol: UDP
           name: battleye
         volumeMounts:
-        - name: steamcmd-data
-          mountPath: /opt/steam
+        - name: steam
+          mountPath: /root/.steam
+        - name: arma3
+          mountPath: /opt/arma3
+        - name: server-config
+          mountPath: /etc/arma3
+        - name: profiles
+          mountPath: /root/.local/share/Arma 3 - Other Profiles/server
+        - name: ca-certificates
+          mountPath: /etc/ssl/certs
+          readOnly: true
+      volumes:
+      - name: server-config
+        secret:
+          secretName: server-config
+      - name: profiles
+        configMap:
+          name: profiles
+      - name: ca-certificates
+        hostPath:
+          path: /etc/ssl/certs
+          type: Directory
   volumeClaimTemplates:
   - metadata:
-      name: steamcmd-data
+      name: steam
       namespace: arma3
     spec:
       accessModes:
@@ -114,9 +142,19 @@ spec:
       storageClassName: longhorn
       resources:
         requests:
-          storage: 32G
-        limits:
-          storage: 196G
+          storage: 2G
+  - metadata:
+      name: arma3
+      namespace: arma3
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 192G
+  updateStrategy:
+    type: OnDelete
 ---
 apiVersion: v1
 kind: Secret
@@ -131,11 +169,11 @@ stringData:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: arma3
+  name: server-config
   namespace: arma3
 stringData:
+  # https://community.bistudio.com/wiki/Arma_3:_Server_Config_File
   server.cfg: |
-    # https://community.bistudio.com/wiki/Arma_3:_Server_Config_File
     passwordAdmin = "{{ arma3.admin_password }}";
     password = "{{ arma3.server_password }}";
     serverCommandPassword = "{{ arma3.server_command_password }}";
@@ -148,7 +186,7 @@ stringData:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: arma3-profiles
+  name: profiles
   namespace: arma3
 data:
   server.Arma3Profile: |

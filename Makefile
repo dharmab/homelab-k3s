@@ -45,8 +45,6 @@ format:
 	@echo "Formatting Python"
 	isort **/*.py
 	black **/*.py
-	@echo "Formatting YAML"
-	find . '(' -name "*.yml" -or -name "*.yaml" ')' -exec yamlfmt {} --write ';'
 	@echo "All formatting completed"
 
 check:

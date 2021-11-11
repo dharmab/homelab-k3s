@@ -1,5 +1,6 @@
 .vagrant/
 vagrant/ssh_config
-kubernetes/kubeconfig.yaml
+kubernetes/*.yaml
 config/
+live/
 *.pyc
