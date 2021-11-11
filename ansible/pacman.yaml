@@ -1,7 +1,7 @@
 ---
 - hosts: all
   tasks:
-  - name: enable parallel downloads
+  - name: enable parallel downloads  # noqa risky-file-permissions
     ini_file:
       path: /etc/pacman.conf
       section: options

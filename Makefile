@@ -42,13 +42,25 @@ clean:
 	rm -f $(KUBECONFIG)
 
 format:
+	@echo "Formatting Python"
 	isort **/*.py
 	black **/*.py
+	@echo "Formatting YAML"
 	find . '(' -name "*.yml" -or -name "*.yaml" ')' -exec yamlfmt {} --write ';'
+	@echo "All formatting completed"
 
 check:
+	@echo "Checking Python formatting"
 	black --check **/*.py
 	isort --check **/*.py
-	yamllint .
+	@echo "Checking Python type hints"
 	mypy **/*.py
+	@echo "Checking Python style"
 	pylint **/*.py
+	@echo "Checking all YAML filenames end in .yaml rather than .yml"
+	! find . -name *.yml | grep .
+	@echo "Checking YAML style"
+	yamllint .
+	@echo "Checking Ansible playbook style"
+	ansible-lint -qq ansible/main.yaml
+	@echo "All checks passed"

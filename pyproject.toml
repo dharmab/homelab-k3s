@@ -13,6 +13,7 @@ tenacity = "^8.0.1"
 jsonschema = "^4.2.1"
 pydantic = "^1.8.2"
 yarl = "^1.7.2"
+ansible = "^4.8.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"
@@ -22,6 +23,7 @@ pylint = "^2.11.1"
 types-PyYAML = "^6.0.0"
 pytest = "^6.2.5"
 yamllint = "^1.26.3"
+ansible-lint = {extras = ["core"], version = "^5.2.1"}
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = "pydantic"
