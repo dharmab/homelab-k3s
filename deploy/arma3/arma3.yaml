@@ -19,24 +19,29 @@ spec:
     port: 2302
     protocol: UDP
     targetPort: game
+    nodePort: 31302
   - name: steam-query
     port: 2303
     protocol: UDP
     targetPort: steam-query
+    nodePort: 31303
   - name: steam-master
     port: 2304
     protocol: UDP
     targetPort: steam-master
+    nodePort: 31304
   # VON port is reserved for legacy reasons, although the actual VON traffic
   # was moved to the game's port to work around NAT problems
   - name: von
     port: 2305
     protocol: UDP
     targetPort: von
+    nodePort: 31305
   - name: battleye
     port: 2306
     protocol: UDP
     targetPort: battleye
+    nodePort: 31306
   selector:
     app.kubernetes.io/name: arma3
 ---
@@ -118,9 +123,6 @@ spec:
           mountPath: /etc/arma3
         - name: profiles
           mountPath: /root/.local/share/Arma 3 - Other Profiles/server
-        - name: ca-certificates
-          mountPath: /etc/ssl/certs
-          readOnly: true
       volumes:
       - name: server-config
         secret:
@@ -128,10 +130,6 @@ spec:
       - name: profiles
         configMap:
           name: profiles
-      - name: ca-certificates
-        hostPath:
-          path: /etc/ssl/certs
-          type: Directory
   volumeClaimTemplates:
   - metadata:
       name: steam
