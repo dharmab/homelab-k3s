@@ -11,7 +11,7 @@ kubernetes = "^19.15.0"
 Jinja2 = "^3.0.2"
 tenacity = "^8.0.1"
 jsonschema = "^4.2.1"
-pydantic = "^1.8.2"
+pydantic = {extras = ["email"], version = "^1.8.2"}
 yarl = "^1.7.2"
 ansible = "^4.8.0"
 

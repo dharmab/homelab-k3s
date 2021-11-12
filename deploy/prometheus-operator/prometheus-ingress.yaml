@@ -4,7 +4,6 @@ metadata:
   name: prometheus-k8s
   namespace: monitoring
 spec:
-  ingressClassName: nginx
   rules:
   - http:
       paths:

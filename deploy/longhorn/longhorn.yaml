@@ -1174,7 +1174,6 @@ metadata:
   name: longhorn-frontend
   namespace: longhorn-system
 spec:
-  ingressClassName: nginx
   rules:
   - http:
       paths:

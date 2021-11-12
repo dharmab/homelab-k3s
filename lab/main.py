@@ -7,13 +7,14 @@ import os
 import subprocess
 from pathlib import Path
 from time import sleep
-from typing import List, Sequence
+from typing import List, Sequence, Tuple
 
 import jinja2
 import kubernetes.client  # type: ignore
 import kubernetes.config  # type: ignore
 import tenacity
 import yaml
+from yarl import URL
 
 from config import LabConfig
 
@@ -147,13 +148,42 @@ def _wait_for_crd(
         sleep(1)
 
 
-def customize_manifests(manifests: List[dict]) -> List[dict]:
+def customize_manifests(manifests: List[dict], *, config: LabConfig) -> List[dict]:
     for manifest in manifests:
+        identity = f"{manifest['kind']} {manifest['metadata']['name']}"
+        if manifest["metadata"].get("namespace"):
+            identity += f" in Namespace {manifest['metadata']['namespace']}"
+
         if manifest["kind"] in ("Deployment", "StatefulSet", "Job", "CronJob"):
             pod_template = manifest["spec"]["template"]
 
             for container in pod_template["spec"]["containers"]:
-                container["imagePullPolicy"] = "IfNotPresent"
+                if container.get("imagePullPolicy") != "IfNotPresent":
+                    print(
+                        f"Customizing {identity}: Setting image pull policy to IfNotPresent to conserve network bandwidth"
+                    )
+                    container["imagePullPolicy"] = "IfNotPresent"
+        if manifest["kind"] == "Ingress":
+            # https://cert-manager.io/docs/usage/ingress/
+            print(
+                f"Customizing {identity}: Configuring TLS using ClusterIssuer {config.cert_manager.issuer.value}"
+            )
+            manifest["spec"]["ingressClassName"] = "nginx"
+            if "annotations" not in manifest["metadata"]:
+                manifest["metadata"]["annotations"] = {}
+            manifest["metadata"]["annotations"].update(
+                {
+                    "cert-manager.io/cluster-issuer": config.cert_manager.issuer.value,
+                }
+            )
+            manifest["spec"]["tls"] = [
+                {
+                    "hosts": [config.nginx.base_url.host],
+                    "secretName": f"{manifest['metadata']['name']}-ingress-tls",
+                }
+            ]
+            for rule in manifest["spec"].get("rules", []):
+                rule["host"] = config.nginx.base_url.host
 
     return manifests
 
@@ -191,7 +221,10 @@ def main() -> None:
 
         deploy_manifests(
             customize_manifests(
-                parse_manifests([Path(m) for m in args.manifests], config=config)
+                manifests=parse_manifests(
+                    [Path(m) for m in args.manifests], config=config
+                ),
+                config=config,
             ),
             api_extensions_api=kubernetes.client.ApiextensionsV1Api(),
         )

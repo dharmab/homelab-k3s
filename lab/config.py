@@ -22,6 +22,7 @@ LabConfig object, such as the following:
 
 and set the LABCONFIG environment variable to the JSON file's path.
 """
+import enum
 from typing import Any
 
 import pydantic
@@ -37,6 +38,24 @@ class ExtendedBaseModel(pydantic.BaseModel):
         return self.json(*args, encoder=plaintext_encoder, **kwargs)
 
 
+class Issuer(str, enum.Enum):
+    SELF_SIGNED = "selfsigned"
+    LETS_ENCRYPT_STAGING = "letsencrypt-staging"
+    LETS_ENCRYPT = "letsencrypt"
+
+
+class CertManager(ExtendedBaseModel):
+    # email is an email address for Let's Encrypt to contact in case of issues
+    email: pydantic.EmailStr
+    # cloudflare_api_token is an API token with permission to edit the DNS
+    # zone required by the ACME DNS01 solver.
+    cloudflare_api_token: pydantic.SecretStr
+    # issuer is the issuer to use. You should use the self-signed issuer for
+    # a localhost cluster. Use the Let's Encrypt staging issuer to verify your
+    # configuration before switching to the production issuer.
+    issuer: Issuer = Issuer.SELF_SIGNED
+
+
 class Nginx(ExtendedBaseModel):
     # base_url is the base URL that Nginx will serve path-based ingresses. For
     # example, the Prometheus web UI will be served from base_url +
@@ -50,7 +69,7 @@ class SteamCmd(ExtendedBaseModel):
     # separate Steam account with no purchases for this. Steam Guard must be
     # disabled for fully automated installations to function.
     username: str
-    # password it he password of the Steam user account.
+    # password is the password of the Steam user account.
     password: pydantic.SecretStr
 
 
@@ -71,5 +90,6 @@ class Arma3(ExtendedBaseModel):
 
 class LabConfig(ExtendedBaseModel):
     # Top level configuration object
+    cert_manager: CertManager
     nginx: Nginx
     arma3: Arma3

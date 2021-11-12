@@ -33,7 +33,7 @@ $(KUBECONFIG): install-dependencies
 	poetry run ./lab/kubeconfig.py --kubeconfig $(KUBECONFIG)
 
 cluster-deploy:
-	poetry run ./lab/main.py -c $(LABCONFIG) deploy -m deploy/
+	poetry run ./lab/main.py --config $(LABCONFIG) --kubeconfig $(KUBECONFIG) deploy -m deploy/
 
 cluster-test:
 	poetry run pytest tests/ -m integration
