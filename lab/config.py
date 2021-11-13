@@ -84,7 +84,9 @@ class Arma3(ExtendedBaseModel):
     # server_command_password is the password required for a player to use
     # server commands:
     server_command_password: pydantic.SecretStr
-    # steamcmd is
+    # steamcmd is credentials to authenticate to Steam.
+    # Note that Arma 3 does not need to be purchased to download the dedicated
+    # server, but DOES need to be purchased to download mods.
     steamcmd: SteamCmd
 
 

@@ -72,6 +72,21 @@ spec:
         - "$(PASSWORD)"
         - +force_install_dir /opt/arma3
         - +app_update 233780
+        - +workshop_download_item
+        - "450814997"  # CBA_A3
+        - "463939057"  # ACE
+        - "751965892"  # ACRE
+        - "497661914"  # CUP Units
+        - "497660133"  # CUP Weapons
+        - "549676314"  # CUP Weapons ACE Compatibility
+        - "541888371"  # CUP Vehicles
+        - "621650475"  # CUP Vehicles ACE Compatibility
+        - "583496184"  # CUP Terrains Core
+        - "583544987"  # CUP Terrains Maps
+        - "1981964169"  # CUP Terrains Maps 2.0
+        - "853743366"  # CUP Terrains CWA
+        - "1375890861"  # CUP Terrains ACE Compatibility
+        - "1638341685"  # DUI Squad Radar
         - +quit
         env:
         - name: USERNAME
