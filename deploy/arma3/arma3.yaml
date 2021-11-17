@@ -64,29 +64,115 @@ spec:
         app.kubernetes.io/name: arma3
     spec:
       initContainers:
-      - name: steamcmd
+      - name: install-arma3-server
         image: steamcmd/steamcmd:ubuntu-20
         args:
         - +login
         - "$(USERNAME)"
         - "$(PASSWORD)"
         - +force_install_dir /opt/arma3
+        # 233780 = Arma 3 Dedicated Server appid
         - +app_update 233780
-        - +workshop_download_item
-        - "450814997"  # CBA_A3
-        - "463939057"  # ACE
-        - "751965892"  # ACRE
-        - "497661914"  # CUP Units
-        - "497660133"  # CUP Weapons
-        - "549676314"  # CUP Weapons ACE Compatibility
-        - "541888371"  # CUP Vehicles
-        - "621650475"  # CUP Vehicles ACE Compatibility
-        - "583496184"  # CUP Terrains Core
-        - "583544987"  # CUP Terrains Maps
-        - "1981964169"  # CUP Terrains Maps 2.0
-        - "853743366"  # CUP Terrains CWA
-        - "1375890861"  # CUP Terrains ACE Compatibility
-        - "1638341685"  # DUI Squad Radar
+        - +quit
+        env:
+        - name: USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: username
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: password
+        volumeMounts:
+        - name: steam
+          mountPath: /root/.steam
+        - name: arma3
+          mountPath: /opt/arma3
+      - name: install-arma3-mods-stage-1
+        image: steamcmd/steamcmd:ubuntu-20
+        args:
+        - +login
+        - "$(USERNAME)"
+        - "$(PASSWORD)"
+        - +force_install_dir /opt/arma3
+        # 107410 = Arma 3 client appid
+        # Mods are downloaded to /opt/arma3/workshop/content/107410/<workshop id>/
+        - +workshop_download_item 107410 450814997  # CBA_A3
+        - +workshop_download_item 107410 463939057  # ACE
+        - +workshop_download_item 107410 751965892  # ACRE
+        - +workshop_download_item 107410 1858075458  # LAMBS Danger.FSM
+        - +workshop_download_item 107410 1779063631  # Zeus Enhanced
+        - +workshop_download_item 107410 2018593688  # Zeus Enhanced ACE Compatibility
+        - +workshop_download_item 107410 620260972  # ALiVE
+        - +workshop_download_item 107410 333310405  # Enhanced Movement
+        - +workshop_download_item 107410 1638341685  # DUI Squad Radar
+        - +workshop_download_item 107410 861133494  # JSRS Soundmod
+        - +workshop_download_item 107410 1624804924  # JSRS Soundmod CUP Vehicles Compatibility
+        - +workshop_download_item 107410 1624803912  # JSRS Soundmod CUP Weapons Compatibility
+        - +quit
+        env:
+        - name: USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: username
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: password
+        volumeMounts:
+        - name: steam
+          mountPath: /root/.steam
+        - name: arma3
+          mountPath: /opt/arma3
+      - name: install-arma3-mods-stage-2
+        image: steamcmd/steamcmd:ubuntu-20
+        args:
+        - +login
+        - "$(USERNAME)"
+        - "$(PASSWORD)"
+        - +force_install_dir /opt/arma3
+        # 107410 = Arma 3 client appid
+        # Mods are downloaded to /opt/arma3/workshop/content/107410/<workshop id>/
+        - +workshop_download_item 107410 497661914  # CUP Units
+        - +workshop_download_item 107410 497660133  # CUP Weapons
+        - +workshop_download_item 107410 549676314  # CUP Weapons ACE Compatibility
+        - +workshop_download_item 107410 541888371  # CUP Vehicles
+        - +workshop_download_item 107410 621650475  # CUP Vehicles ACE Compatibility
+        - +quit
+        env:
+        - name: USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: username
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: password
+        volumeMounts:
+        - name: steam
+          mountPath: /root/.steam
+        - name: arma3
+          mountPath: /opt/arma3
+      - name: install-arma3-mods-stage-3
+        image: steamcmd/steamcmd:ubuntu-20
+        args:
+        - +login
+        - "$(USERNAME)"
+        - "$(PASSWORD)"
+        - +force_install_dir /opt/arma3
+        # 107410 = Arma 3 client appid
+        # Mods are downloaded to /opt/arma3/workshop/content/107410/<workshop id>/
+        - +workshop_download_item 107410 583496184  # CUP Terrains Core
+        - +workshop_download_item 107410 583544987  # CUP Terrains Maps
+        - +workshop_download_item 107410 1981964169  # CUP Terrains Maps 2.0
+        - +workshop_download_item 107410 853743366  # CUP Terrains CWA
+        - +workshop_download_item 107410 1375890861  # CUP Terrains ACE Compatibility
         - +quit
         env:
         - name: USERNAME
