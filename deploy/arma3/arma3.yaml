@@ -162,6 +162,7 @@ spec:
           mountPath: /root/.steam
         - name: arma3
           mountPath: /opt/arma3
+      hostNetwork: true  # Without this, some players behind Comcast CGNAT have problems connecting (?)
       volumes:
       - name: server-config
         secret:
