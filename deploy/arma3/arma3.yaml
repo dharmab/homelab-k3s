@@ -5,46 +5,6 @@ kind: Namespace
 metadata:
   name: arma3
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: arma3
-  namespace: arma3
-  labels:
-    app.kubernetes.io/name: arma3
-spec:
-  type: NodePort
-  ports:
-  - name: game
-    port: 2302
-    protocol: UDP
-    targetPort: game
-    nodePort: 31302
-  - name: steam-query
-    port: 2303
-    protocol: UDP
-    targetPort: steam-query
-    nodePort: 31303
-  - name: steam-master
-    port: 2304
-    protocol: UDP
-    targetPort: steam-master
-    nodePort: 31304
-  # VON port is reserved for legacy reasons, although the actual VON traffic
-  # was moved to the game's port to work around NAT problems
-  - name: von
-    port: 2305
-    protocol: UDP
-    targetPort: von
-    nodePort: 31305
-  - name: battleye
-    port: 2306
-    protocol: UDP
-    targetPort: battleye
-    nodePort: 31306
-  selector:
-    app.kubernetes.io/name: arma3
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
