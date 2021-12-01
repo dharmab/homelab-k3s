@@ -203,7 +203,7 @@ spec:
         args:
         - -client
         - -connect=127.0.0.1
-        - -password=${ARMA3_SERVER_PASSWORD}
+        - -password=$(ARMA3_SERVER_PASSWORD)
         env:
         - name: ARMA3_SERVER_PASSWORD
           valueFrom:
