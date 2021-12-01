@@ -84,6 +84,10 @@ spec:
           mountPath: /root/.steam
         - name: arma3
           mountPath: /opt/arma3
+        - name: server-config
+          mountPath: /etc/arma3
+        - name: profiles
+          mountPath: /root/.local/share/Arma 3 - Other Profiles/server
       - name: steamcmd
         image: steamcmd/steamcmd:ubuntu-20
         command:
@@ -108,10 +112,6 @@ spec:
           mountPath: /root/.steam
         - name: arma3
           mountPath: /opt/arma3
-        - name: server-config
-          mountPath: /etc/arma3
-        - name: profiles
-          mountPath: /root/.local/share/Arma 3 - Other Profiles/server
       hostNetwork: true  # Without this, some players behind Comcast CGNAT have problems connecting (?)
       volumes:
       - name: server-config
