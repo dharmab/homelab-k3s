@@ -1,10 +1,10 @@
-# https://community.bistudio.com/wiki/Arma_3:_Dedicated_Server
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: arma3
 ---
+# https://community.bistudio.com/wiki/Arma_3:_Dedicated_Server
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -12,25 +12,28 @@ metadata:
   namespace: arma3
   labels:
     app.kubernetes.io/name: arma3
+    app.kubernetes.io/component: server
 spec:
-  serviceName: arma3
   replicas: 1
+  serviceName: arma3
   selector:
     matchLabels:
       app.kubernetes.io/name: arma3
+      app.kubernetes.io/component: server
   template:
     metadata:
       labels:
         app.kubernetes.io/name: arma3
+        app.kubernetes.io/component: server
     spec:
       initContainers:
       - name: install
         image: steamcmd/steamcmd:ubuntu-20
         args:
+        - +force_install_dir /opt/arma3
         - +login
         - "$(USERNAME)"
         - "$(PASSWORD)"
-        - +force_install_dir /opt/arma3
         - +app_update $(ARMA3_DEDICATED_SERVER_APPID)
         - +quit
         env:
@@ -60,19 +63,6 @@ spec:
         args:
         - -name=server
         - -config=/etc/arma3/server.cfg
-        # Mods example:
-        # - -mod=@cba_a3;@ace;@acre;@alive;@cup_weapons;@cup_weapons_ace;@cup_units;@cup_vehicles;@cup_vehicles_ace;@cup_terrains_core;@cup_terrains_maps;@cup_terrains_maps_2.0;@cup_terrains_cwa;@cup_terrains_ace;@dui_squad_radar;@enhanced_movement;@jsrs;@jsrs_cup_vehicles;@jsrs_cup_weapons;@lambs_danger.fsm;@zeus_enhanced;@zeus_enhanced_ace
-        env:
-        - name: STEAM_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: steam-account
-              key: username
-        - name: STEAM_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: steam-account
-              key: password
         ports:
         - containerPort: 2302
           protocol: UDP
@@ -94,10 +84,6 @@ spec:
           mountPath: /root/.steam
         - name: arma3
           mountPath: /opt/arma3
-        - name: server-config
-          mountPath: /etc/arma3
-        - name: profiles
-          mountPath: /root/.local/share/Arma 3 - Other Profiles/server
       - name: steamcmd
         image: steamcmd/steamcmd:ubuntu-20
         command:
@@ -122,6 +108,10 @@ spec:
           mountPath: /root/.steam
         - name: arma3
           mountPath: /opt/arma3
+        - name: server-config
+          mountPath: /etc/arma3
+        - name: profiles
+          mountPath: /root/.local/share/Arma 3 - Other Profiles/server
       hostNetwork: true  # Without this, some players behind Comcast CGNAT have problems connecting (?)
       volumes:
       - name: server-config
@@ -150,7 +140,131 @@ spec:
       storageClassName: longhorn
       resources:
         requests:
-          storage: 192G
+          storage: 128G
+  updateStrategy:
+    type: OnDelete
+---
+# https://community.bistudio.com/wiki/Arma_3:_Headless_Client
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: arma3-headless-client
+  namespace: arma3
+  labels:
+    app.kubernetes.io/name: arma3
+    app.kubernetes.io/component: headless-client
+spec:
+  replicas: 1
+  serviceName: arma3-headless-client
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: arma3
+      app.kubernetes.io/component: headless-client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: arma3
+        app.kubernetes.io/component: headless-client
+    spec:
+      initContainers:
+      - name: install
+        image: steamcmd/steamcmd:ubuntu-20
+        args:
+        - +force_install_dir /opt/arma3
+        - +login
+        - "$(USERNAME)"
+        - "$(PASSWORD)"
+        - +app_update $(ARMA3_DEDICATED_SERVER_APPID)
+        - +quit
+        env:
+        - name: ARMA3_DEDICATED_SERVER_APPID
+          value: "233780"
+        - name: USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: username
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: password
+        volumeMounts:
+        - name: steam
+          mountPath: /root/.steam
+        - name: arma3
+          mountPath: /opt/arma3
+      containers:
+      - name: arma3
+        image: ubuntu:20.04
+        workingDir: /opt/arma3
+        command:
+        - /opt/arma3/arma3server_x64
+        args:
+        - -client
+        - -connect=127.0.0.1
+        - -password=${ARMA3_SERVER_PASSWORD}
+        env:
+        - name: ARMA3_SERVER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: server-credentials
+              key: password
+        volumeMounts:
+        - name: steam
+          mountPath: /root/.steam
+        - name: arma3
+          mountPath: /opt/arma3
+      - name: steamcmd
+        image: steamcmd/steamcmd:ubuntu-20
+        command:
+        - /bin/bash
+        - -c
+        - "trap : TERM INT; sleep infinity & wait"
+        env:
+        - name: ARMA3_APPID
+          value: "107410"
+        - name: STEAM_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: username
+        - name: STEAM_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: steam-account
+              key: password
+        volumeMounts:
+        - name: steam
+          mountPath: /root/.steam
+        - name: arma3
+          mountPath: /opt/arma3
+      hostNetwork: true  # Need to share network namespace with server due to headless client allowlist
+      volumes:
+      - name: server-credentials
+        secret:
+          secretName: server-credentials
+  volumeClaimTemplates:
+  - metadata:
+      name: steam
+      namespace: arma3
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 2G
+  - metadata:
+      name: arma3
+      namespace: arma3
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 128G
   updateStrategy:
     type: OnDelete
 ---
@@ -166,6 +280,15 @@ stringData:
 ---
 apiVersion: v1
 kind: Secret
+type: Opaque
+metadata:
+  name: server-credentials
+  namespace: arma3
+stringData:
+  password: "{{ arma3.server_password }}"
+---
+apiVersion: v1
+kind: Secret
 metadata:
   name: server-config
   namespace: arma3
@@ -176,10 +299,14 @@ stringData:
     password = "{{ arma3.server_password }}";
     serverCommandPassword = "{{ arma3.server_command_password }}";
     hostname = "{{ arma3.hostname }}";
+    persistent = 1;
     disableVoN = 1;
     BattleEye = 0;
     statisticsEnabled = 0;
     verifySignatures = 0;
+    headlessClients[] = {"127.0.0.1"};
+    localClient[] = {"127.0.0.1"};
+    forceDifficulty = "custom";
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -187,6 +314,7 @@ metadata:
   name: profiles
   namespace: arma3
 data:
+  # https://community.bistudio.com/wiki/Arma_3:_Server_Config_File
   server.Arma3Profile: |
     class DifficultyPresets
     {
@@ -206,7 +334,7 @@ data:
                 detectedMines = 0;		// Detected mines (0 = never, 1 = limited distance, 2 = always)
                 commands = 0;			// Commands (0 = never, 1 = fade out, 2 = always)
                 waypoints = 0;			// Waypoints (0 = never, 1 = fade out, 2 = always)
-                tacticalPing = 1;		// Tactical ping (0 = disable, 1 = enable)
+                tacticalPing = 0;		// Tactical ping (0 = disable, 1 = enable)
 
                 /* Personal awareness */
 

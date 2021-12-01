@@ -8,3 +8,6 @@ cluster-deploy:
 
 cluster-test:
 	poetry run pytest tests/ -m integration
+
+arma3-update-mods:
+	poetry run ./lab/main.py -k $(KUBECONFIG) -c $(LABCONFIG) update-arma3-mods

@@ -23,7 +23,8 @@ LabConfig object, such as the following:
 and set the LABCONFIG environment variable to the JSON file's path.
 """
 import enum
-from typing import Any
+import string
+from typing import Any, List
 
 import pydantic
 
@@ -73,6 +74,28 @@ class SteamCmd(ExtendedBaseModel):
     password: pydantic.SecretStr
 
 
+class Arma3Mod(ExtendedBaseModel):
+    # name is a snake_case name for the mod.
+    name: str
+    # workshop_id is the mod's workshop ID.
+    workshop_id: int
+
+    @classmethod
+    @pydantic.validator("name")
+    def name_must_be_snake_case(cls, v: str) -> str:
+        valid_characters = string.ascii_lowercase + string.digits + "_."
+        if not all(c in valid_characters for c in v):
+            raise ValueError("name must be snake_case")
+        return v
+
+    @classmethod
+    @pydantic.validator("workshop_id")
+    def workshop_id_must_be_postive(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("workshop_id must be a positive integer")
+        return v
+
+
 class Arma3(ExtendedBaseModel):
     # hostname is the name of the server displayed in the server browser.
     hostname: str
@@ -88,6 +111,8 @@ class Arma3(ExtendedBaseModel):
     # Note that Arma 3 does not need to be purchased to download the dedicated
     # server, but DOES need to be purchased to download mods.
     steamcmd: SteamCmd
+    # mods is a set of mods to install on the server.
+    mods: List[Arma3Mod] = []
 
 
 class LabConfig(ExtendedBaseModel):

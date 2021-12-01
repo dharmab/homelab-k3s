@@ -7,20 +7,15 @@ import os
 import subprocess
 from pathlib import Path
 from time import sleep
-from typing import List, Sequence, Tuple
+from typing import List, Sequence
 
 import jinja2
 import kubernetes.client  # type: ignore
 import kubernetes.config  # type: ignore
 import tenacity
 import yaml
-from yarl import URL
 
-from config import LabConfig
-
-
-class Command(enum.Enum):
-    DEPLOY = enum.auto()
+from config import Arma3Mod, LabConfig
 
 
 def _parse_args() -> argparse.Namespace:
@@ -57,6 +52,8 @@ def _parse_args() -> argparse.Namespace:
         required=True,
         help="Kubernetes YAML or JSON manifest file to deploy",
     )
+
+    subparsers.add_parser("update-arma3-mods", help="Install or update Arma 3 mods")
 
     return parser.parse_args()
 
@@ -184,6 +181,11 @@ def customize_manifests(manifests: List[dict], *, config: LabConfig) -> List[dic
             ]
             for rule in manifest["spec"].get("rules", []):
                 rule["host"] = config.nginx.base_url.host
+        if config.arma3.mods and manifest["metadata"].get("namespace") == "arma3" and manifest["kind"] == "StatefulSet" and manifest["metadata"]["name"] in ("arma3", "arma3-headless-client"):
+            print(f"Customizing {identity}: Adding Arma 3 mods to arma3server arguments")
+            for container in manifest["spec"]["template"]["spec"]["containers"]:
+                if container["name"] == "arma3":
+                    container["args"].append("-mod=" + ";".join(f"@{mod.name}" for mod in config.arma3.mods))
 
     return manifests
 
@@ -210,15 +212,74 @@ def deploy_manifests(
     kubectl_apply(manifests)
 
 
+@tenacity.retry(wait=tenacity.wait_fixed(1), stop=tenacity.stop_after_attempt(32))  # retry works around segfaults
+def update_arma3_mods(
+    *, mods: List[Arma3Mod], core_api: kubernetes.client.CoreV1Api
+) -> None:
+    for component in ("server", "headless-client"):
+        print(f"Downloading mods for Arma 3 component: {component}")
+        pods = core_api.list_namespaced_pod(
+            namespace="arma3",
+            label_selector=f"app.kubernetes.io/name=arma3,app.kubernetes.io/component={component}",
+        )
+        for pod in pods.items:
+            for mod in mods:
+                print(
+                    f"Downloading {mod.name} ({mod.workshop_id}) in volume for Pod {pod.metadata.name}..."
+                )
+                try:
+                    response = kubernetes.stream.stream(
+                        core_api.connect_get_namespaced_pod_exec,
+                        name=pod.metadata.name,
+                        namespace=pod.metadata.namespace,
+                        container="steamcmd",
+                        command=[
+                            "bash",
+                            "-c",
+                            f"steamcmd +force_install_dir /opt/arma3 +login $STEAM_USERNAME $STEAM_PASSWORD +workshop_download_item $ARMA3_APPID {mod.workshop_id} +quit",
+                        ],
+                        stdin=False,
+                        stdout=True,
+                        stderr=True,
+                        tty=True,
+                    )
+                    if response:
+                        print(response)
+
+                    print(f"Linking {mod.name} in Pod {pod.metadata.name}...")
+                    response = kubernetes.stream.stream(
+                        core_api.connect_get_namespaced_pod_exec,
+                        name=pod.metadata.name,
+                        namespace=pod.metadata.namespace,
+                        container="steamcmd",
+                        command=[
+                            "bash",
+                            "-c",
+                            f"ln -sf /opt/arma3/steamapps/workshop/content/$ARMA3_APPID/{mod.workshop_id} /opt/arma3/@{mod.name}",
+                        ],
+                        stdin=False,
+                        stdout=True,
+                        stderr=True,
+                        tty=False,
+                    )
+                    if response:
+                        print(response)
+                except kubernetes.client.rest.ApiException as e:
+                    print(f"error: {e}")
+                    raise e
+    print("Updated Arma 3 mods. Run `kubectl -n arma3 delete pod -l app.kubernetes.io/name=arma3` to reload mods.")
+
+
 def main() -> None:
     """Entrypoint function"""
     args = _parse_args()
-    if args.command == "deploy":
-        assert args.kubeconfig
-        kubernetes.config.load_kube_config(config_file=args.kubeconfig)
-        assert args.config
-        config = LabConfig.parse_file(Path(args.config))
 
+    assert args.kubeconfig
+    kubernetes.config.load_kube_config(config_file=args.kubeconfig)
+    assert args.config
+    config: LabConfig = LabConfig.parse_file(Path(args.config))
+
+    if args.command == "deploy":
         deploy_manifests(
             customize_manifests(
                 manifests=parse_manifests(
@@ -227,6 +288,10 @@ def main() -> None:
                 config=config,
             ),
             api_extensions_api=kubernetes.client.ApiextensionsV1Api(),
+        )
+    elif args.command == "update-arma3-mods":
+        update_arma3_mods(
+            mods=config.arma3.mods, core_api=kubernetes.client.CoreV1Api()
         )
 
 
