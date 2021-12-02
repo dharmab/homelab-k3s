@@ -35,7 +35,7 @@ To log in as a server admin, type `#login <admin password>` into the in-game cha
 
 Mods can be configured in the lab config file using the `arma3.mods` option. To install or update all configured mods, stop any currently running mission, then run:
 
-```
+```sh
 make cluster-deploy update-arma3-mods
 kubectl -n arma3 delete pod -l app.kubernetes.io/name=arma3
 ```
