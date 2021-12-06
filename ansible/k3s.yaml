@@ -26,9 +26,10 @@
 
   - name: download k3s binary
     get_url:
-      url: https://github.com/k3s-io/k3s/releases/download/v1.22.2%2Bk3s2/k3s
+      # https://github.com/k3s-io/k3s/releases
+      url: https://github.com/k3s-io/k3s/releases/download/v1.22.4%2Bk3s1/k3s
       dest: /opt/k3s/bin/k3s
-      checksum: sha256:567e5838dc9d0346ea1aae55b917ee557d3a7b89947de5038eb41a500d87f0d7
+      checksum: sha256:84bc5241f76d9468c25bb5982624df21ba7f1d6fb142d5986912dca82577d6f7
       mode: 0755
       owner: root
       group: root
