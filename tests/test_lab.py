@@ -370,7 +370,7 @@ def test_ingress_nginx(apps_api: AppsV1Api) -> None:
 def test_arma3(apps_api: AppsV1Api) -> None:
     assert _get_stateful_set(namespace="arma3", name="arma3", apps_api=apps_api)
     assert _get_stateful_set(
-        namespace="arma3-headless-client", name="arma3", apps_api=apps_api
+        namespace="arma3", name="arma3-headless-client", apps_api=apps_api
     )
 
 
