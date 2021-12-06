@@ -67,3 +67,4 @@
   handlers:
   - name: reboot system
     reboot:
+    become: true
