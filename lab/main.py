@@ -5,10 +5,10 @@ import json
 import logging
 import os
 import subprocess
+import time
 from pathlib import Path
 from time import sleep
 from typing import List, Sequence
-import time
 
 import jinja2
 import kubernetes.client  # type: ignore
@@ -335,7 +335,9 @@ def update_arma3_mods(
             for mod in mods:
                 _update_arma3_mod(pod=pod, mod=mod, core_api=core_api, logger=logger)
 
-                logger.info(f"Linking {mod.name} in volume for Pod {pod.metadata.name}...")
+                logger.info(
+                    f"Linking {mod.name} in volume for Pod {pod.metadata.name}..."
+                )
                 kubectl_exec(
                     core_api=core_api,
                     pod=pod,
@@ -344,10 +346,12 @@ def update_arma3_mods(
                         "bash",
                         "-c",
                         # Note we're linking to a "lower" directory - see below for why
-                        " && ".join([
-                            f"rm -f /opt/arma3/@{mod.name}",
-                            f"ln -sf {content_directory}/lower/{mod.workshop_id} /opt/arma3/@{mod.name}",
-                        ])
+                        " && ".join(
+                            [
+                                f"rm -f /opt/arma3/@{mod.name}",
+                                f"ln -sf {content_directory}/lower/{mod.workshop_id} /opt/arma3/@{mod.name}",
+                            ]
+                        ),
                     ],
                     logger=logger,
                 )
