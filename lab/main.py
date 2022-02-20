@@ -274,6 +274,8 @@ def deploy_manifests(
     )
     kubectl_apply(filter_manifests("ClusterRoleBinding", "RoleBinding"), logger=logger)
     kubectl_apply(filter_manifests("ConfigMap", "Secret", "Service"), logger=logger)
+    # TODO delete nginx batch jobs from apiserver before redeploying nginx due
+    # to immutability
     kubectl_apply(manifests, logger=logger)
 
 
