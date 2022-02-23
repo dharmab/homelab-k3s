@@ -403,7 +403,7 @@ def update_arma3_mods(
             )
 
     logger.info(
-        "Updated Arma 3 mods. Run `kubectl -n arma3 delete pod -l app.kubernetes.io/name=arma3` to reload mods."
+        "Updated Arma 3 mods. Manifest changes must also be deployed. Run `kubectl -n arma3 delete pod -l app.kubernetes.io/name=arma3` to reload mods."
     )
 
 
