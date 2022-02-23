@@ -114,6 +114,22 @@ class Arma3(ExtendedBaseModel):
     # mods is a set of mods to install on the server.
     mods: List[Arma3Mod] = []
 
+    @classmethod
+    @pydantic.validator("mods")
+    def mods_must_be_unique(cls, v: List[Arma3Mod]) -> List[Arma3Mod]:
+        names = []
+        ids = []
+        for mod in v:
+            if mod.name in names:
+                raise ValueError("Mod with name {mod.name} is non-unique")
+            names.append(mod.name)
+
+            if mod.workshop_id in ids:
+                raise ValueError("Mod with ID {mod.workshop_id} is non-unique")
+            ids.append(mod.workshop_id)
+
+        return v
+
 
 class LabConfig(ExtendedBaseModel):
     # Top level configuration object
