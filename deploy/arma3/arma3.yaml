@@ -307,6 +307,10 @@ stringData:
     headlessClients[] = {"127.0.0.1"};
     localClient[] = {"127.0.0.1"};
     forceDifficulty = "custom";
+    // https://community.bistudio.com/wiki/Arma_3:_Server_Config_File#Server_Security
+    allowedLoadFileExtensions[] = { "hpp","sqs","sqf","fsm","cpp","paa","txt","xml","inc","ext","sqm","ods","fxy","lip","csv","kb","bik","bikb","html","htm","biedi" };
+    allowedPreprocessFileExtensions[] = { "hpp","sqs","sqf","fsm","cpp","paa","txt","xml","inc","ext","sqm","ods","fxy","lip","csv","kb","bik","bikb","html","htm","biedi" };
+    allowedHTMLLoadExtensions[] = { "htm","html","xml","txt" };
 ---
 apiVersion: v1
 kind: ConfigMap
