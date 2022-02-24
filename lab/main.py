@@ -415,6 +415,7 @@ def main() -> None:
     kubernetes.config.load_kube_config(config_file=args.kubeconfig)
     assert args.config
     config: LabConfig = LabConfig.parse_file(Path(args.config))
+    LabConfig.validate(config)
 
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s"
