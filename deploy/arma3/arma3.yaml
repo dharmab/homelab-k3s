@@ -357,7 +357,7 @@ data:
                 waypoints = 0; // Waypoints (0 = never, 1 = fade out, 2 = always)
 
                 // Shows Weapon Info box contains round and magazine count, firing mode, etc..
-                // 	0 = never, 1 = fade out, 2 = always
+                // 0 = never, 1 = fade out, 2 = always
                 weaponInfo = 2;
                 // Displays stance indication contains actual stance, weapon resting and deployment.
                 // 0 = never, 1 = fade out, 2 = always
@@ -377,7 +377,7 @@ data:
                 // Shakes camera if player is near explosion, passing vehicle or if player's vehicle is under G-load.
                 // 0 = disabled, 1 = enabled
                 cameraShake = 1;
-                // 	Displays table with kills, deaths and overall score in multiplayer.
+                // Displays table with kills, deaths and overall score in multiplayer.
                 // 0 = disabled, 1 = enabled
                 scoreTable = 0;
                 // Shows in chat window who killed the player.
