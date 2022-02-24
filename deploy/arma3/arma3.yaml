@@ -378,6 +378,6 @@ data:
         class CustomAILevel
         {
             skillAI = 0.90;
-            precisionAI = 0.25;
+            precisionAI = 0.35;
         };
     };
