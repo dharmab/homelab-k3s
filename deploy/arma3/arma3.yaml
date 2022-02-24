@@ -303,6 +303,10 @@ stringData:
     disableVoN = 1;
     BattleEye = 0;
     statisticsEnabled = 0;
+    // I found an issue with some mods (LAMBS, CUP ACE Weapons Compatibility)
+    // where the .bisign client keys and .bikey server keys downloaded differ
+    // between steamcmd on Linux and Steam on Windows. I'm not sure if this is
+    // a Steam bug or mod bug. For now I've disable signature verification.
     verifySignatures = 0;
     headlessClients[] = {"127.0.0.1"};
     localClient[] = {"127.0.0.1"};
