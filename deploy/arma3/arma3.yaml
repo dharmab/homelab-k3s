@@ -295,21 +295,35 @@ metadata:
 stringData:
   # https://community.bistudio.com/wiki/Arma_3:_Server_Config_File
   server.cfg: |
+    // Password to protect admin access.
     passwordAdmin = "{{ arma3.admin_password }}";
+    // Password required to connect to server.
     password = "{{ arma3.server_password }}";
+    // Password required by alternate syntax of serverCommand server-side scripting.
     serverCommandPassword = "{{ arma3.server_command_password }}";
+    // Servername visible in the game browser.
     hostname = "{{ arma3.hostname }}";
-    persistent = 1;
-    disableVoN = 1;
-    BattleEye = 0;
-    statisticsEnabled = 0;
+    // The maximum number of players that can connect to server. The final number will be lesser between number given here and number of mission slots.
+    maxPlayers = 64;
+    // Headless clients IPs. Multiple connections and addresses are allowed in the case of more than one Headless Client.
+    headlessClients[] = {"127.0.0.1"};
+    // Indicates clients with unlimited bandwidth and nearly no latency.
+    localClient[] = {"127.0.0.1"};
+    // Enables or disables the signature verification for addons.
     // I found an issue with some mods (LAMBS, CUP ACE Weapons Compatibility)
     // where the .bisign client keys and .bikey server keys downloaded differ
     // between steamcmd on Linux and Steam on Windows. I'm not sure if this is
     // a Steam bug or mod bug. For now I've disable signature verification.
     verifySignatures = 0;
-    headlessClients[] = {"127.0.0.1"};
-    localClient[] = {"127.0.0.1"};
+    // Enables or disables the Voice over Net.
+    disableVoN = 1;
+    // Enables or disables the BattlEye anti-cheat engine.
+    BattleEye = 0;
+    // Mission keeps running when all clients disconnect.
+    persistent = 1;
+    // Allows to opt-out of Arma 3 analytics
+    statisticsEnabled = 0;
+    // Enforces the selected difficulty on the server.
     forceDifficulty = "custom";
     // https://community.bistudio.com/wiki/Arma_3:_Server_Config_File#Server_Security
     allowedLoadFileExtensions[] = { "hpp","sqs","sqf","fsm","cpp","paa","txt","xml","inc","ext","sqm","ods","fxy","lip","csv","kb","bik","bikb","html","htm","biedi" };
