@@ -322,7 +322,9 @@ metadata:
   name: profiles
   namespace: arma3
 data:
-  # https://community.bistudio.com/wiki/Arma_3:_Server_Config_File
+  # https://community.bistudio.com/wiki/server.armaprofile#Arma_3
+  # https://community.bistudio.com/wiki/Arma_3:_Difficulty_Settings
+  # https://community.bistudio.com/wiki/Arma_3:_AI_Skill
   server.Arma3Profile: |
     class DifficultyPresets
     {
@@ -330,54 +332,93 @@ data:
         {
             class Options
             {
-                /* Simulation */
+                // Decreases damage dealt to the player and members of their group
+                // 0 = disabled, 1 = enabled
+                reducedDamage = 0;
+                // Shows indication icons on units in player's group.
+                // 0 = never, 1 = limited distance, 2 = always
+                groupIndicators = 0;
+                // Friendly unit identification. Works only when the player aims at a unit.
+                // 0 = never, 1 = limited distance, 2 = always
+                // Consider DUI Squad Radar instead
+                friendlyTags = 0;
+                // Enemy unit identification. Works only when the player aims at a unit.
+                // 0 = never, 1 = limited distance, 2 = always
+                enemyTags = 0; // Enemy name tags (0 = never, 1 = limited distance, 2 = always)
+                // Shows icons indicating exact positions of mines.
+                // 0 = never, 1 = limited distance, 2 = always
+                // Consider ACE MineDector instead
+                detectedMines = 0;
+                // Displays command icons like target markers, get in command and others.
+                // 0 = never, 1 = fade out, 2 = always
+                commands = 0;
+                // Manages visibility of waypoint markers.
+                // 0 = never, 1 = fade out, 2 = always
+                waypoints = 0; // Waypoints (0 = never, 1 = fade out, 2 = always)
 
-                reducedDamage = 0;		// Reduced damage
-
-                /* Situational awareness */
-
-                groupIndicators = 0;	// Group indicators (0 = never, 1 = limited distance, 2 = always)
-                friendlyTags = 0;		// Friendly name tags (0 = never, 1 = limited distance, 2 = always)
-                enemyTags = 0;			// Enemy name tags (0 = never, 1 = limited distance, 2 = always)
-                detectedMines = 0;		// Detected mines (0 = never, 1 = limited distance, 2 = always)
-                commands = 0;			// Commands (0 = never, 1 = fade out, 2 = always)
-                waypoints = 0;			// Waypoints (0 = never, 1 = fade out, 2 = always)
-                tacticalPing = 0;		// Tactical ping (0 = disable, 1 = enable)
-
-                /* Personal awareness */
-
-                weaponInfo = 2;			// Weapon info (0 = never, 1 = fade out, 2 = always)
-                stanceIndicator = 2;	// Stance indicator (0 = never, 1 = fade out, 2 = always)
-                staminaBar = 1;			// Stamina bar
-                weaponCrosshair = 0;	// Weapon crosshair
-                visionAid = 0;			// Vision aid
-
-                /* View */
-
-                thirdPersonView = 1;	// 3rd person view (0 = disabled, 1 = enabled, 2 = enabled for vehicles only (Since  Arma 3 v1.99))
-                cameraShake = 1;		// Camera shake
-
-                /* Multiplayer */
-
-                scoreTable = 0;			// Score table
-                deathMessages = 0;		// Killed by
-                vonID = 1;				// VoN ID
-
-                /* Misc */
-
-                mapContent = 0;			// Extended map content
-                autoReport = 0;			// (former autoSpot) Automatic reporting of spotted enemied by players only. This doesn't have any effect on AIs.
-                multipleSaves = 1;		// Multiple saves
+                // Shows Weapon Info box contains round and magazine count, firing mode, etc..
+                // 	0 = never, 1 = fade out, 2 = always
+                weaponInfo = 2;
+                // Displays stance indication contains actual stance, weapon resting and deployment.
+                // 0 = never, 1 = fade out, 2 = always
+                stanceIndicator = 2;
+                // Manages visibility of stamina indicator. Fades in when stamina changes.
+                // 0 = disabled, 1 = enabled
+                staminaBar = 1; // Stamina bar
+                // Shows weapon crosshair both in 1st and 3rd person view.
+                // 0 = disabled, 1 = enabled
+                weaponCrosshair = 0;
+                // Helps to detect units in visual range and identify friend from foe.
+                // 0 = disabled, 1 = enabled
+                visionAid = 0;
+                // Enables camera switching to 3rd person view.
+                // 0 = disabled, 1 = enabled, 2 = vehicles only
+                thirdPersonView = 1;
+                // Shakes camera if player is near explosion, passing vehicle or if player's vehicle is under G-load.
+                // 0 = disabled, 1 = enabled
+                cameraShake = 1;
+                // 	Displays table with kills, deaths and overall score in multiplayer.
+                // 0 = disabled, 1 = enabled
+                scoreTable = 0;
+                // Shows in chat window who killed the player.
+                // 0 = disabled, 1 = enabled
+                deathMessages = 0;A
+                // Indicates who is speaking through VON communication.
+                // 0 = disabled, 1 = enabled
+                vonID = 1;
+                // Shows friendly units on the map.
+                // 0 = disabled, 1 = enabled
+                mapContentFriendly = 0;
+                // Shows enemy units on the map.
+                // 0 = disabled, 1 = enabled
+                mapContentEnemy = 0;
+                // Shows detected mines on the map.
+                // 0 = disabled, 1 = enabled
+                mapContentMines = 0;
+                // Allows players to highlight a position via a Tactical Ping.
+                // 0 = disabled, 1 = enabled
+                // Consider ACE spotting instead
+                tacticalPing = 0;
+                // Enables/disables automatic reporting of spotted enemies by players.
+                // 0 = disabled, 1 = enabled
+                autoReport = 0;
+                // Allows player to create multiple saves in a mission.
+                // 0 = disabled, 1 = enabled
+                multipleSaves = 1;
             };
-
-            // aiLevelPreset defines AI skill level and is counted from 0 and can have following values: 0 (Low), 1 (Normal), 2 (High), 3 (Custom).
-            // when 3 (Custom) is chosen, values of skill and precision are taken from the class CustomAILevel.
+            // Sets AI skills based on preset or CustomAILevel lcass
+            // 0 = low, 1 = normal, 2 = high, 3 = custom
             aiLevelPreset = 3;
         };
 
         class CustomAILevel
         {
+            // Influences multiple sub-skills related to intelligence
+            // Higher values are recommended
             skillAI = 0.90;
+            // Influences multiple sub-skills related to accuracy
+            // Lower values result in longer firefights and are recommended
+            // High values result in overly lethal AI
             precisionAI = 0.35;
         };
     };
