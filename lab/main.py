@@ -111,7 +111,14 @@ def kubectl_apply(manifests: List[dict], *, logger: logging.Logger) -> None:
         with attempt:
             try:
                 subprocess.run(
-                    ["kubectl", "apply", "-f", "-"],
+                    [
+                        "kubectl",
+                        "apply",
+                        "--server-side=true",
+                        "--force-conflicts=true",
+                        "-f",
+                        "-",
+                    ],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     input=yaml.dump_all(manifests).encode("utf-8"),
