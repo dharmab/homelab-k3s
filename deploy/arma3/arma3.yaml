@@ -382,7 +382,7 @@ data:
                 scoreTable = 0;
                 // Shows in chat window who killed the player.
                 // 0 = disabled, 1 = enabled
-                deathMessages = 0;A
+                deathMessages = 0;
                 // Indicates who is speaking through VON communication.
                 // 0 = disabled, 1 = enabled
                 vonID = 1;
